@@ -23,7 +23,7 @@ class StatsPanel extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFF7F9FC),
           borderRadius: BorderRadius.circular(12),
-          border: const BorderSide(color: AppColors.border),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -50,7 +50,7 @@ class StatsPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
-        border: const BorderSide(color: AppColors.border),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -63,17 +63,11 @@ class StatsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Últimos 7 días',
-            style: theme.textTheme.titleMedium,
-          ),
+          Text('Últimos 7 días', style: theme.textTheme.titleMedium),
           const SizedBox(height: 10),
           Column(
             children: [
-              statItem(
-                'Preguntas contestadas',
-                '$questionsAnswered',
-              ),
+              statItem('Preguntas contestadas', '$questionsAnswered'),
               const SizedBox(height: 8),
               statItem(
                 'Acertadas',

@@ -5,11 +5,7 @@ class KpiPanel extends StatelessWidget {
   final int totalTests;
   final String label;
 
-  const KpiPanel({
-    super.key,
-    required this.totalTests,
-    required this.label,
-  });
+  const KpiPanel({super.key, required this.totalTests, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +15,7 @@ class KpiPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
-        border: const BorderSide(color: AppColors.border),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -32,10 +28,7 @@ class KpiPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Tests completados',
-            style: theme.textTheme.titleMedium,
-          ),
+          Text('Tests completados', style: theme.textTheme.titleMedium),
           const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
