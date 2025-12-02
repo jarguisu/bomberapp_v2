@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'theme/app_theme.dart';
+import 'ui/screens/home/home_screen.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const BomberApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class BomberApp extends StatelessWidget {
+  const BomberApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return MaterialApp(
+      title: 'BomberAPP',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      home: const HomeScreen(),
     );
   }
 }
