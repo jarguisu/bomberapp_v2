@@ -29,7 +29,7 @@ class AppTheme {
           ),
         ),
       ),
-      cardTheme: CardThemeD(
+      cardTheme: CardThemeData(
         color: AppColors.card,
         elevation: 4,
         shadowColor: AppColors.shadowColor,
