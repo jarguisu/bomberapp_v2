@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_colors.dart';
 import '../../../data/topics/topic_catalog.dart';
+import '../../../logic/test_engine/test_engine.dart';
 import '../../widgets/app_footer.dart';
 import '../../widgets/bomber_dropdown.dart';
+import '../test_runner/test_runner_screen.dart';
 
 class TopicTestConfigScreen extends StatefulWidget {
   const TopicTestConfigScreen({super.key});
@@ -13,7 +16,7 @@ class TopicTestConfigScreen extends StatefulWidget {
 
 class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
   String? _selectedBlockId;
-  String? _selectedTopic;
+  String? _selectedTopicId;
   double _numQuestions = 20;
   bool _withTimer = false;
 
@@ -25,14 +28,23 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
     );
   }
 
-  List<String> get _topicsForSelectedBlock {
+  List<TopicRef> get _topicsForSelectedBlock {
     final block = _selectedBlock;
     if (block == null) return const [];
     return block.topics;
   }
 
+  TopicRef? get _selectedTopicRef {
+    final block = _selectedBlock;
+    if (block == null || _selectedTopicId == null) return null;
+    return block.topics.firstWhere(
+      (t) => t.id == _selectedTopicId,
+      orElse: () => block.topics.first,
+    );
+  }
+
   void _onSubmit() {
-    if (_selectedBlockId == null || _selectedTopic == null) {
+    if (_selectedBlockId == null || _selectedTopicId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Selecciona bloque y tema para continuar.'),
@@ -41,15 +53,28 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
       return;
     }
 
-    final block = _selectedBlock;
+    final topic = _selectedTopicRef;
+    if (topic == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ha ocurrido un error con el tema seleccionado.'),
+        ),
+      );
+      return;
+    }
+
     final int n = _numQuestions.toInt();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Bloque ${block?.label} · Tema: $_selectedTopic\n'
-          '$n preguntas · Cronómetro: ${_withTimer ? "sí" : "no"} (penalización −0,33)',
-        ),
+    final config = TopicTestConfig(
+      topicId: topic.id,      // 👈 G1 (coincide con topic_id en JSON/BBDD)
+      topicName: topic.label, // 👈 "G1 - Constitución" (texto visible)
+      numQuestions: n,
+      withTimer: _withTimer,
+    );
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TestRunnerScreen(config: config),
       ),
     );
   }
@@ -178,7 +203,6 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
               color: AppColors.textMuted,
             ),
           ),
-
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -236,7 +260,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
           ),
           const SizedBox(height: 12),
 
-          // ----- Bloque -----
+          // Bloque
           _buildField(
             label: 'Bloque',
             hint: 'Elige primero el bloque para filtrar los temas.',
@@ -254,7 +278,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
               onChanged: (value) {
                 setState(() {
                   _selectedBlockId = value;
-                  _selectedTopic = null;
+                  _selectedTopicId = null;
                 });
               },
             ),
@@ -262,23 +286,23 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
 
           const SizedBox(height: 12),
 
-          // ----- Tema -----
+          // Tema
           _buildField(
             label: 'Tema',
             child: BomberDropdown<String>(
-              value: _selectedTopic,
+              value: _selectedTopicId,
               hint: 'Selecciona un tema…',
               items: _topicsForSelectedBlock
                   .map(
                     (topic) => DropdownMenuItem<String>(
-                      value: topic,
-                      child: Text(topic),
+                      value: topic.id,
+                      child: Text(topic.label),
                     ),
                   )
                   .toList(),
               onChanged: (value) {
                 setState(() {
-                  _selectedTopic = value;
+                  _selectedTopicId = value;
                 });
               },
             ),
@@ -286,7 +310,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
 
           const SizedBox(height: 12),
 
-          // ----- Nº preguntas -----
+          // Número de preguntas
           _buildField(
             label: 'Número de preguntas',
             hint: 'De 20 a 100, en pasos de 10.',
@@ -307,10 +331,8 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: AppColors.border),
@@ -329,13 +351,13 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
 
           const SizedBox(height: 12),
 
-          // ----- Cronómetro -----
+          // Cronómetro
           _buildField(
             label: 'Cronómetro',
-            hint:
-                '72s por pregunta (1,2 min). Ejemplos: 20→24 min, 100→120 min.',
+            hint: '72s por pregunta (1,2 min). Ejemplos: 20→24 min, 100→120 min.',
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
@@ -365,7 +387,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
 
           const SizedBox(height: 16),
 
-          // ----- CTA -----
+          // CTA
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -391,7 +413,11 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
   // --------------------------
   // Helpers UI
   // --------------------------
-  Widget _buildField({required String label, Widget? child, String? hint}) {
+  Widget _buildField({
+    required String label,
+    Widget? child,
+    String? hint,
+  }) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
