@@ -124,5 +124,14 @@
     "wrong1": "Protección a la familia",
     "wrong2": "Seguridad e higiene en el trabajo",
     "wrong3": "Protección de la salud"
+  },
+  {
+    "topic_id": "G1",
+    "topic_name": "Constitución",
+    "text": "¿test pregunta",
+    "correct": "1",
+    "wrong1": "2",
+    "wrong2": "Seguridad e higiene en el trabajo",
+    "wrong3": "Protección de la salud"
   }
 ]
