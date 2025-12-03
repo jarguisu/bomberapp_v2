@@ -6,15 +6,14 @@ import '../../widgets/kpi_panel.dart';
 import '../../widgets/stats_panel.dart';
 import '../../widgets/mode_card.dart';
 import '../../widgets/app_footer.dart';
+import '../topic_test/topic_test_config_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   void _showComingSoon(BuildContext context, String modeName) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$modeName aún no está implementado.'),
-      ),
+      SnackBar(content: Text('$modeName aún no está implementado.')),
     );
   }
 
@@ -41,10 +40,7 @@ class HomeScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: const [
-                  KpiPanel(
-                    totalTests: 12,
-                    label: 'en total',
-                  ),
+                  KpiPanel(totalTests: 12, label: 'en total'),
                   SizedBox(height: 12),
                   StatsPanel(
                     questionsAnswered: 320,
@@ -54,10 +50,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              Text(
-                'Modos de test',
-                style: theme.textTheme.titleMedium,
-              ),
+              Text('Modos de test', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               // Cards de modos
               ModeCard(
@@ -65,16 +58,22 @@ class HomeScreen extends StatelessWidget {
                 description:
                     'Elige un tema concreto y practica preguntas específicas.',
                 buttonLabel: 'Empezar',
-                onPressed: () => _showComingSoon(context, 'Test por tema'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TopicTestConfigScreen(),
+                    ),
+                  );
+                },
               ),
+
               const SizedBox(height: 12),
               ModeCard(
                 title: 'Test personalizado',
                 description:
                     'Selecciona libremente los temas y define cuántas preguntas quieres.',
                 buttonLabel: 'Configurar',
-                onPressed: () =>
-                    _showComingSoon(context, 'Test personalizado'),
+                onPressed: () => _showComingSoon(context, 'Test personalizado'),
               ),
               const SizedBox(height: 12),
               ModeCard(
@@ -90,8 +89,7 @@ class HomeScreen extends StatelessWidget {
                 description:
                     'Revisa tus errores acumulados y vuelve a intentarlo para mejorar tu puntuación.',
                 buttonLabel: 'Ver preguntas falladas',
-                onPressed: () =>
-                    _showComingSoon(context, 'Preguntas falladas'),
+                onPressed: () => _showComingSoon(context, 'Preguntas falladas'),
               ),
               const SizedBox(height: 16),
               const AppFooter(),
