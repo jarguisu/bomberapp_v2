@@ -185,7 +185,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: AppColors.border),
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
             ),
             child: Text(
               'Penalización −0,33 activa',
@@ -415,24 +415,6 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
           ),
         ],
       ],
-    );
-  }
-
-  InputDecoration _fieldDecoration() {
-    return const InputDecoration(
-      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        borderSide: BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        borderSide: BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        borderSide: BorderSide(color: AppColors.primary),
-      ),
     );
   }
 }
