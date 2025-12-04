@@ -458,10 +458,23 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${block.label}  (${total} temas)',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: block.label,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '  (${total} temas)',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   TextButton(
