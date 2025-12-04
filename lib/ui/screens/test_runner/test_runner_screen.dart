@@ -1,17 +1,45 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../../data/questions/question_model.dart';
+
 import '../../../theme/app_colors.dart';
 import '../../../data/questions/question_repository.dart';
+import '../../../data/questions/question_model.dart';
 import '../../../logic/test_engine/test_engine.dart';
 import '../../../logic/test_engine/test_session.dart';
 import '../../widgets/app_footer.dart';
 
 class TestRunnerScreen extends StatefulWidget {
-  final TopicTestConfig config;
+  final String title;
+  final bool withTimer;
 
-  const TestRunnerScreen({super.key, required this.config});
+  /// Función que, dado un [TestEngine], construye la sesión de test.
+  final Future<TestSession> Function(TestEngine engine) sessionBuilder;
+
+  const TestRunnerScreen({
+    super.key,
+    required this.title,
+    required this.withTimer,
+    required this.sessionBuilder,
+  });
+
+  /// Named constructor para “test por tema”.
+  factory TestRunnerScreen.forTopic({required TopicTestConfig config}) {
+    return TestRunnerScreen(
+      title: config.topicName,
+      withTimer: config.withTimer,
+      sessionBuilder: (engine) => engine.startTopicTest(config),
+    );
+  }
+
+  /// Named constructor para “test personalizado” (varios temas).
+  factory TestRunnerScreen.forCustom({required CustomTestConfig config}) {
+    return TestRunnerScreen(
+      title: 'Test personalizado',
+      withTimer: config.withTimer,
+      sessionBuilder: (engine) => engine.startCustomTest(config),
+    );
+  }
 
   @override
   State<TestRunnerScreen> createState() => _TestRunnerScreenState();
@@ -36,7 +64,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   int _finalWrong = 0;
   double _finalScore = 0.0;
 
-  // Timer (de momento sencillo, basado en nº preguntas)
+  // Timer
   Timer? _timer;
   Duration? _remaining;
   static const int _secondsPerQuestion = 72;
@@ -44,7 +72,9 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   @override
   void initState() {
     super.initState();
-    _engine = TestEngine(questionRepository: SqliteQuestionRepository());
+    _engine = TestEngine(
+      questionRepository: SqliteQuestionRepository(),
+    );
     _loadSession();
   }
 
@@ -62,7 +92,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
     });
 
     try {
-      final session = await _engine.startTopicTest(widget.config);
+      final session = await widget.sessionBuilder(_engine);
 
       final questions = session.questions;
       final optionsPerQuestion = questions
@@ -72,17 +102,14 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       setState(() {
         _questions = questions;
         _optionsPerQuestion = optionsPerQuestion;
-        _selectedOptionIndices = List<int?>.filled(
-          questions.length,
-          null,
-          growable: false,
-        );
+        _selectedOptionIndices =
+            List<int?>.filled(questions.length, null, growable: false);
         _marked = List<bool>.filled(questions.length, false, growable: false);
         _currentIndex = 0;
         _isLoading = false;
       });
 
-      if (widget.config.withTimer) {
+      if (widget.withTimer) {
         _startTimer();
       }
     } catch (e) {
@@ -96,10 +123,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   void _startTimer() {
     _timer?.cancel();
 
-    final totalSeconds = (_questions.length * _secondsPerQuestion).clamp(
-      600,
-      120 * 60,
-    );
+    final totalSeconds =
+        (_questions.length * _secondsPerQuestion).clamp(600, 120 * 60);
     _remaining = Duration(seconds: totalSeconds);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -165,8 +190,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
 
     final responded = _answeredCount;
     if (!auto) {
-      final confirmed =
-          await showDialog<bool>(
+      final confirmed = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Finalizar test'),
@@ -228,8 +252,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
-            ? _buildError(theme)
-            : _buildContent(theme),
+                ? _buildError(theme)
+                : _buildContent(theme),
       ),
     );
   }
@@ -240,7 +264,11 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          Icon(
+            Icons.error_outline,
+            color: AppColors.error,
+            size: 40,
+          ),
           const SizedBox(height: 12),
           Text(
             'No se ha podido cargar el test.',
@@ -325,7 +353,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                                 vertical: 6,
                               ),
                               backgroundColor: isMarked
-                                  ? AppColors.error.withValues(alpha: 0.06)
+                                  ? AppColors.error
+                                      .withValues(alpha: 0.06)
                                   : AppColors.background,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -376,9 +405,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.primary.withValues(
-                                          alpha: 0.12,
-                                        )
+                                      ? AppColors.primary
+                                          .withValues(alpha: 0.12)
                                       : AppColors.background,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
@@ -402,9 +430,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                                           width: 2,
                                         ),
                                         color: isSelected
-                                            ? AppColors.primary.withValues(
-                                                alpha: 0.2,
-                                              )
+                                            ? AppColors.primary
+                                                .withValues(alpha: 0.2)
                                             : Colors.transparent,
                                       ),
                                       child: Center(
@@ -470,11 +497,11 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 6,
-                              mainAxisSpacing: 8,
-                              crossAxisSpacing: 8,
-                              childAspectRatio: 1.1,
-                            ),
+                          crossAxisCount: 6,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 1.1,
+                        ),
                         itemCount: _questions.length,
                         itemBuilder: (context, index) {
                           final answered =
@@ -490,10 +517,12 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                             bg = AppColors.primary.withValues(alpha: 0.12);
                             textColor = AppColors.textPrimary;
                           }
+
                           if (marked) {
-                            bg = const Color(0xFFFFF3C4);
-                            //border = AppColors.error;
+                            bg = const Color(0xFFFFF3C4); // amarillo suave
+                            border = AppColors.error;
                           }
+
                           if (active) {
                             border = AppColors.primary;
                           }
@@ -528,19 +557,18 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                           _legendDot(
                             theme,
                             label: 'Sin contestar',
-                            color: const Color(
-                              0xFFE3E6EC,
-                            ), // gris claro visible
+                            color: const Color(0xFFE3E6EC),
                           ),
                           _legendDot(
                             theme,
                             label: 'Contestada',
-                            color: AppColors.primary.withValues(alpha: 0.25),
+                            color: AppColors.primary
+                                .withValues(alpha: 0.25),
                           ),
                           _legendDot(
                             theme,
                             label: 'Marcada',
-                            color: const Color(0xFFFFF3C4), // amarillo suave
+                            color: const Color(0xFFFFF3C4),
                           ),
                         ],
                       ),
@@ -573,7 +601,9 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+            border: Border.all(
+              color: AppColors.border.withValues(alpha: 0.7),
+            ),
           ),
         ),
         const SizedBox(width: 6),
@@ -590,20 +620,20 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   }
 
   Widget _buildHeader(ThemeData theme) {
-    final minutes = _remaining != null
-        ? _remaining!.inMinutes.remainder(60)
-        : null;
-    final seconds = _remaining != null
-        ? _remaining!.inSeconds.remainder(60)
-        : null;
+    final minutes =
+        _remaining != null ? _remaining!.inMinutes.remainder(60) : null;
+    final seconds =
+        _remaining != null ? _remaining!.inSeconds.remainder(60) : null;
 
-    final hasTimer = widget.config.withTimer && _remaining != null;
+    final hasTimer = widget.withTimer && _remaining != null;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+        border: Border(
+          bottom: BorderSide(color: AppColors.border),
+        ),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -637,7 +667,11 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.shield, size: 18, color: Colors.black),
+                child: const Icon(
+                  Icons.shield,
+                  size: 18,
+                  color: Colors.black,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -657,7 +691,9 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                 LinearProgressIndicator(
                   value: _progressPct,
                   backgroundColor: AppColors.background,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.primary,
+                  ),
                   minHeight: 8,
                   borderRadius: BorderRadius.circular(999),
                 ),
@@ -666,7 +702,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Por tema',
+                      widget.title,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textMuted,
                         fontSize: 11,
@@ -687,7 +723,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
           const SizedBox(width: 8),
           if (hasTimer)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: AppColors.border),
@@ -713,7 +750,9 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        border: Border(
+          top: BorderSide(color: AppColors.border),
+        ),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -730,10 +769,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
               child: OutlinedButton(
                 onPressed: isFirst ? null : _goPrev,
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 10,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -752,10 +789,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
               child: ElevatedButton(
                 onPressed: isLast ? null : _goNext,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 10,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -769,10 +804,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 14,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

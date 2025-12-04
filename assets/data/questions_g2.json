@@ -1,0 +1,29 @@
+[
+  {
+    "topic_id": "G2",
+    "topic_name": "Estatuto de Autonomía",
+    "text": "Según el Artículo 64.3 del Estatuto de Autonomía de la Comunitat Valenciana, para potenciar la autonomía local sobre la base del principio de subsidiariedad, por Ley de Les Corts, se creará:",
+    "correct": "El Fondo de Cooperación Municipal de la Comunitat Valenciana",
+    "wrong1": "La Ley de Comarcalización de la Comunitat Valenciana",
+    "wrong2": "El Comité de Municipios de la Comunitat Valenciana",
+    "wrong3": "La Comisión Mixta entre la Generalitat y la Federación de Municipios y Provincias"
+  },
+  {
+    "topic_id": "G2",
+    "topic_name": "Estatuto de Autonomía",
+    "text": "Que articulo del Estatuto de Autonomía de la C.V habla sobre la lengua:",
+    "correct": "Artículo 6",
+    "wrong1": "Artículo 7",
+    "wrong2": "Artículo 5",
+    "wrong3": "Artículo 4"
+  },
+  {
+    "topic_id": "G2",
+    "topic_name": "Estatuto de Autonomía",
+    "text": "La bandera de la Comunitat Valenciana es la Senyera compuesta por:",
+    "correct": "4 barras rojas sobre fondo amarillo, coronadas sobre franja azul junto al asta",
+    "wrong1": "4 barras rojas sobre fondo amarillo",
+    "wrong2": "4 barras rojas sobre fondo amarillo, sobre franja roja junto al asta",
+    "wrong3": "4 barras rojas sobre fondo amarillo, sobre franja azul junto al asta"
+  }
+]

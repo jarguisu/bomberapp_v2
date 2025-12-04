@@ -7,9 +7,12 @@ Future<void> main() async {
   // Necesario para poder cargar assets y usar SQLite antes de runApp
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Cargar preguntas de G1 desde JSON a SQLite (solo si no existen)
+  // Cargar preguntas de temas desde JSON a SQLite (solo si no existen)
   await QuestionSeedLoader.seedFromJsonAsset(
     'assets/data/questions_g1.json',
+  );
+  await QuestionSeedLoader.seedFromJsonAsset(
+    'assets/data/questions_g2.json',
   );
 
   runApp(const BomberApp());

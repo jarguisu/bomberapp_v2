@@ -1,16 +1,13 @@
 class TopicRef {
-  final String id;     // G1, G2, E1...
-  final String label;  // Lo que se ve en la app: "G1 - Constitución"
+  final String id; // G1, G2, E1...
+  final String label; // Lo que se ve en la app: "G1 - Constitución"
 
-  const TopicRef({
-    required this.id,
-    required this.label,
-  });
+  const TopicRef({required this.id, required this.label});
 }
 
 class TopicBlock {
-  final String id;        // Por si luego tienes más bloques
-  final String label;     // "Bloque General", "Bloque A", etc.
+  final String id; // Por si luego tienes más bloques
+  final String label; // "Bloque General", "Bloque A", etc.
   final List<TopicRef> topics;
 
   const TopicBlock({
@@ -26,10 +23,8 @@ const List<TopicBlock> topicBlocks = [
     id: 'GENERAL',
     label: 'Bloque General',
     topics: [
-      TopicRef(
-        id: 'G1',                 // 👈 ESTE debe coincidir con topic_id del JSON/BBDD
-        label: 'G1 - Constitución', // 👈 Esto es solo lo que ve el usuario
-      ),
+      TopicRef(id: 'G1', label: 'G1 - Constitución'),
+      TopicRef(id: 'G2', label: 'G2 - Estatuto de Autonomía'),
     ],
   ),
 ];

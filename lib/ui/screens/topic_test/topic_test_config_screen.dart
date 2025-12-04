@@ -73,10 +73,11 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
     );
 
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => TestRunnerScreen(config: config),
-      ),
-    );
+  MaterialPageRoute(
+    builder: (_) => TestRunnerScreen.forTopic(config: config),
+  ),
+);
+
   }
 
   @override

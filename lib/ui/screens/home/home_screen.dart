@@ -7,6 +7,7 @@ import '../../widgets/stats_panel.dart';
 import '../../widgets/mode_card.dart';
 import '../../widgets/app_footer.dart';
 import '../topic_test/topic_test_config_screen.dart';
+import '../custom_test/custom_test_config_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -73,7 +74,13 @@ class HomeScreen extends StatelessWidget {
                 description:
                     'Selecciona libremente los temas y define cuántas preguntas quieres.',
                 buttonLabel: 'Configurar',
-                onPressed: () => _showComingSoon(context, 'Test personalizado'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const CustomTestConfigScreen(),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 12),
               ModeCard(

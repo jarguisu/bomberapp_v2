@@ -19,6 +19,20 @@ class TopicTestConfig {
   });
 }
 
+class CustomTestConfig {
+  final List<String> topicIds; // p.ej. ['G1', 'G2']
+  final int numQuestions;
+  final bool withTimer;
+
+  const CustomTestConfig({
+    required this.topicIds,
+    required this.numQuestions,
+    required this.withTimer,
+  });
+}
+
+
+
 /// Motor principal de tests.
 /// Se encarga de pedir preguntas al repositorio y
 /// generar una TestSession lista para usar en la UI.
@@ -57,9 +71,21 @@ class TestEngine {
     return TestSession(questions: questions);
   }
 
-  /// En el futuro: crear test personalizado, simulacro oficial, etc.
-  ///
-  /// Ejemplo de firma:
-  ///
-  /// Future<TestSession> startCustomTest(CustomTestConfig config) async { ... }
+    /// Crea una sesión de test combinando varios temas.
+  Future<TestSession> startCustomTest(CustomTestConfig config) async {
+    final questions = await questionRepository.getQuestionsByTopics(
+      topicIds: config.topicIds,
+      totalLimit: config.numQuestions,
+      randomOrder: true,
+    );
+
+    if (questions.isEmpty) {
+      throw StateError(
+        'No se han encontrado preguntas para los temas seleccionados.',
+      );
+    }
+
+    return TestSession(questions: questions);
+  }
+
 }

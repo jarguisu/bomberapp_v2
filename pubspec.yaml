@@ -22,3 +22,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/questions_g1.json
+    - assets/data/questions_g2.json
