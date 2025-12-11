@@ -347,21 +347,21 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _quickButton(
-                theme,
-                label: 'Seleccionar Bloque general',
-                onTap: () => _quickSelectBlock('A'),
-              ),
-              _quickButton(
-                theme,
-                label: 'Seleccionar Bloque específico',
-                onTap: () => _quickSelectBlock('B'),
-              ),
-              _quickButton(
-                theme,
-                label: 'Seleccionar Bloque servicio',
-                onTap: () => _quickSelectBlock('C'),
-              ),
+          _quickButton(
+            theme,
+            label: 'Seleccionar Bloque general',
+            onTap: () => _quickSelectBlock('G'),
+          ),
+          _quickButton(
+            theme,
+            label: 'Seleccionar Bloque específico',
+            onTap: () => _quickSelectBlock('E'),
+          ),
+          _quickButton(
+            theme,
+            label: 'Seleccionar Bloque servicio',
+            onTap: () => _quickSelectBlock('S'),
+          ),
               _quickButton(
                 theme,
                 label: 'Limpiar selección',
@@ -424,7 +424,8 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
         final visibles = filteredTopics.length;
 
         final allSelected = block.topics.isNotEmpty &&
-            block.topics.every((t) => _selectedTopicIds.contains(t.id));
+            block.topics.every(
+                (t) => _selectedTopicIds.contains(t.topicId));
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
