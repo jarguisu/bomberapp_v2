@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../logic/test_engine/test_engine.dart';
+import '../../../data/questions/question_repository.dart';
+import '../../../data/topics/topic_catalog.dart';
 import '../test_runner/test_runner_screen.dart';
 import '../../widgets/app_footer.dart';
 
@@ -14,41 +16,7 @@ class CustomTestConfigScreen extends StatefulWidget {
 }
 
 class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
-  // --------- DATA (de momento solo G1 y G2) ---------
-
-  // Bloques:
-  // A → Bloque General
-  // B → Bloque Específico (placeholder)
-  // C → Bloque Servicio (placeholder)
-
-  final List<_CustomBlock> _blocks = const [
-    _CustomBlock(
-      id: 'A',
-      label: 'Bloque general',
-      topics: [
-        _CustomTopic(
-          id: 'G1',
-          label: 'G1 - Constitución',
-          blockId: 'A',
-        ),
-        _CustomTopic(
-          id: 'G2',
-          label: 'G2 - Estatuto de Autonomía',
-          blockId: 'A',
-        ),
-      ],
-    ),
-    _CustomBlock(
-      id: 'B',
-      label: 'Bloque específico',
-      topics: [],
-    ),
-    _CustomBlock(
-      id: 'C',
-      label: 'Bloque servicio',
-      topics: [],
-    ),
-  ];
+  late final List<_CustomBlock> _blocks;
 
   // Estado
   final Set<String> _selectedTopicIds = {}; // ej: {'G1','G2'}
@@ -62,7 +30,7 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
     final blocks = <String>{};
     for (final block in _blocks) {
       final hasSelected = block.topics
-          .any((t) => _selectedTopicIds.contains(t.id));
+          .any((t) => _selectedTopicIds.contains(t.topicId));
       if (hasSelected) blocks.add(block.id);
     }
     return blocks.length;
@@ -70,10 +38,10 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
 
   void _toggleTopic(_CustomTopic topic) {
     setState(() {
-      if (_selectedTopicIds.contains(topic.id)) {
-        _selectedTopicIds.remove(topic.id);
+      if (_selectedTopicIds.contains(topic.topicId)) {
+        _selectedTopicIds.remove(topic.topicId);
       } else {
-        _selectedTopicIds.add(topic.id);
+        _selectedTopicIds.add(topic.topicId);
       }
     });
   }
@@ -84,18 +52,18 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
     if (block.topics.isEmpty) return;
 
     final allSelected =
-        block.topics.every((t) => _selectedTopicIds.contains(t.id));
+        block.topics.every((t) => _selectedTopicIds.contains(t.topicId));
 
     setState(() {
       if (allSelected) {
         // Deseleccionar todo ese bloque
         for (final t in block.topics) {
-          _selectedTopicIds.remove(t.id);
+          _selectedTopicIds.remove(t.topicId);
         }
       } else {
         // Seleccionar todo el bloque
         for (final t in block.topics) {
-          _selectedTopicIds.add(t.id);
+          _selectedTopicIds.add(t.topicId);
         }
       }
     });
@@ -108,7 +76,7 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
 
     setState(() {
       for (final t in block.topics) {
-        _selectedTopicIds.add(t.id);
+        _selectedTopicIds.add(t.topicId);
       }
     });
   }
@@ -117,6 +85,22 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
     setState(() {
       _selectedTopicIds.clear();
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _blocks = topicBlocks
+        .map(
+          (block) => _CustomBlock(
+            id: block.id,
+            label: block.label,
+            topics: block.topics
+                .map((t) => _CustomTopic.fromTopicRef(t))
+                .toList(),
+          ),
+        )
+        .toList();
   }
 
   void _onSearchChanged(String value) {
@@ -133,8 +117,14 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
       return;
     }
 
+    final selectedTopics = _blocks
+        .expand((b) => b.topics)
+        .where((t) => _selectedTopicIds.contains(t.topicId))
+        .map((t) => t.toFilter())
+        .toList();
+
     final config = CustomTestConfig(
-      topicIds: _selectedTopicIds.toList(),
+      topics: selectedTopics,
       numQuestions: _numQuestions.toInt(),
       withTimer: _withTimer,
     );
@@ -499,7 +489,8 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: filteredTopics.map((topic) {
-                    final selected = _selectedTopicIds.contains(topic.id);
+                    final selected =
+                        _selectedTopicIds.contains(topic.topicId);
                     return InkWell(
                       borderRadius: BorderRadius.circular(999),
                       onTap: () => _toggleTopic(topic),
@@ -692,7 +683,7 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
 // ----------------- Helpers internos -----------------
 
 class _CustomBlock {
-  final String id; // 'A', 'B', 'C'
+  final String id; // G, E, S
   final String label;
   final List<_CustomTopic> topics;
 
@@ -704,13 +695,46 @@ class _CustomBlock {
 }
 
 class _CustomTopic {
-  final String id;      // 'G1', 'G2', etc. (topic_id en BBDD)
-  final String label;   // 'G1 - Constitución'
-  final String blockId; // 'A', 'B', 'C'
+  final String topicId; // Ej: GEN_CV_G2
+  final String topicCode; // Ej: G2
+  final String topicName; // Texto visible
+  final String blockId; // G/E/S
+  final String entityId;
+  final String entityName;
+  final String syllabusId;
+  final String syllabusName;
 
   const _CustomTopic({
-    required this.id,
-    required this.label,
+    required this.topicId,
+    required this.topicCode,
+    required this.topicName,
     required this.blockId,
+    required this.entityId,
+    required this.entityName,
+    required this.syllabusId,
+    required this.syllabusName,
   });
+
+  String get label => '$topicCode - $topicName';
+
+  QuestionTopicFilter toFilter() => QuestionTopicFilter(
+        blockId: blockId,
+        topicCode: topicCode,
+        topicId: topicId,
+        entityId: entityId,
+        syllabusId: syllabusId,
+      );
+
+  factory _CustomTopic.fromTopicRef(TopicRef ref) {
+    return _CustomTopic(
+      topicId: ref.topicId,
+      topicCode: ref.topicCode,
+      topicName: ref.topicName,
+      blockId: ref.blockId,
+      entityId: ref.entityId,
+      entityName: ref.entityName,
+      syllabusId: ref.syllabusId,
+      syllabusName: ref.syllabusName,
+    );
+  }
 }

@@ -1,13 +1,30 @@
 class TopicRef {
-  final String id; // G1, G2, E1...
-  final String label; // Lo que se ve en la app: "G1 - Constitución"
+  final String blockId; // G, E o S
+  final String topicCode; // G1, G2, E1...
+  final String topicId; // ID del tema en el temario/convocatoria
+  final String topicName; // Texto visible
+  final String entityId; // GEN, CONSVAL...
+  final String entityName; // Nombre largo de la entidad
+  final String syllabusId; // GEN_CV, CONSVAL_2024...
+  final String syllabusName; // Nombre largo del temario
 
-  const TopicRef({required this.id, required this.label});
+  const TopicRef({
+    required this.blockId,
+    required this.topicCode,
+    required this.topicId,
+    required this.topicName,
+    required this.entityId,
+    required this.entityName,
+    required this.syllabusId,
+    required this.syllabusName,
+  });
+
+  String get label => '$topicCode - $topicName';
 }
 
 class TopicBlock {
-  final String id; // Por si luego tienes más bloques
-  final String label; // "Bloque General", "Bloque A", etc.
+  final String id; // Bloque G/E/S
+  final String label; // "Bloque General", "Bloque Específico"...
   final List<TopicRef> topics;
 
   const TopicBlock({
@@ -17,14 +34,48 @@ class TopicBlock {
   });
 }
 
-// De momento solo tenemos el tema G1 real en la BBDD.
+// Temas disponibles por bloque/entidad/convocatoria
 const List<TopicBlock> topicBlocks = [
   TopicBlock(
-    id: 'GENERAL',
+    id: 'G',
     label: 'Bloque General',
     topics: [
-      TopicRef(id: 'G1', label: 'G1 - Constitución'),
-      TopicRef(id: 'G2', label: 'G2 - Estatuto de Autonomía'),
+      TopicRef(
+        blockId: 'G',
+        topicCode: 'G1',
+        topicId: 'GEN_CV_G1',
+        topicName: 'Constitución',
+        entityId: 'GEN',
+        entityName: 'Genérico Comunidad Valenciana',
+        syllabusId: 'GEN_CV',
+        syllabusName: 'Temario genérico Bombero CV',
+      ),
+      TopicRef(
+        blockId: 'G',
+        topicCode: 'G2',
+        topicId: 'GEN_CV_G2',
+        topicName: 'Estatuto de Autonomía',
+        entityId: 'GEN',
+        entityName: 'Genérico Comunidad Valenciana',
+        syllabusId: 'GEN_CV',
+        syllabusName: 'Temario genérico Bombero CV',
+      ),
+    ],
+  ),
+  TopicBlock(
+    id: 'S',
+    label: 'Bloque Servicio',
+    topics: [
+      TopicRef(
+        blockId: 'S',
+        topicCode: 'S1',
+        topicId: 'CONSVAL_2024_S1',
+        topicName: 'Organización y funcionamiento del servicio',
+        entityId: 'CONSVAL',
+        entityName: 'Consorcio Provincial de Bomberos de Valencia',
+        syllabusId: 'CONSVAL_2024',
+        syllabusName: 'Temario Consorcio Valencia 2024',
+      ),
     ],
   ),
 ];
