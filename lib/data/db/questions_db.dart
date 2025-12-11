@@ -16,45 +16,56 @@ class QuestionsDb {
 
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE questions(
-            id TEXT PRIMARY KEY,
-            block_id TEXT NOT NULL,
-            topic_code TEXT NOT NULL,
-            topic_id TEXT NOT NULL,
-            topic_name TEXT NOT NULL,
-            entity_id TEXT NOT NULL,
-            entity_name TEXT NOT NULL,
-            syllabus_id TEXT NOT NULL,
-            syllabus_name TEXT NOT NULL,
-            text TEXT NOT NULL,
-            correct TEXT NOT NULL,
-            wrong1 TEXT NOT NULL,
-            wrong2 TEXT NOT NULL,
-            wrong3 TEXT NOT NULL,
-            explanation TEXT,
-            reference TEXT,
-            difficulty INTEGER,
-            source TEXT,
-            year INTEGER
-          );
-        ''');
-
-        await db.execute(
-          'CREATE INDEX idx_questions_topic ON questions(topic_id);',
-        );
-        await db.execute(
-          'CREATE INDEX idx_questions_block ON questions(block_id);',
-        );
-        await db.execute(
-          'CREATE INDEX idx_questions_entity ON questions(entity_id);',
-        );
-        await db.execute(
-          'CREATE INDEX idx_questions_syllabus ON questions(syllabus_id);',
-        );
+        await _createSchema(db);
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // Migramos cualquier base de datos previa al nuevo esquema completo.
+        if (oldVersion < 2) {
+          await db.execute('DROP TABLE IF EXISTS questions;');
+          await _createSchema(db);
+        }
+      },
+    );
+  }
+
+  static Future<void> _createSchema(Database db) async {
+    await db.execute('''
+      CREATE TABLE questions(
+        id TEXT PRIMARY KEY,
+        block_id TEXT NOT NULL,
+        topic_code TEXT NOT NULL,
+        topic_id TEXT NOT NULL,
+        topic_name TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        entity_name TEXT NOT NULL,
+        syllabus_id TEXT NOT NULL,
+        syllabus_name TEXT NOT NULL,
+        text TEXT NOT NULL,
+        correct TEXT NOT NULL,
+        wrong1 TEXT NOT NULL,
+        wrong2 TEXT NOT NULL,
+        wrong3 TEXT NOT NULL,
+        explanation TEXT,
+        reference TEXT,
+        difficulty INTEGER,
+        source TEXT,
+        year INTEGER
+      );
+    ''');
+
+    await db.execute(
+      'CREATE INDEX idx_questions_topic ON questions(topic_id);',
+    );
+    await db.execute(
+      'CREATE INDEX idx_questions_block ON questions(block_id);',
+    );
+    await db.execute(
+      'CREATE INDEX idx_questions_entity ON questions(entity_id);',
+    );
+    await db.execute(
+      'CREATE INDEX idx_questions_syllabus ON questions(syllabus_id);',
     );
   }
 }
