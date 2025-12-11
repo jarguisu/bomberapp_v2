@@ -22,8 +22,8 @@ class QuestionSeedLoader {
 
     // 2) Tomamos los identificadores del primer registro
     final first = jsonList.first as Map<String, dynamic>;
-    final String topicId = first['topic_id'] as String;
-    final String syllabusId = first['syllabus_id'] as String;
+    final String topicId = _requireString(first, 'topic_id');
+    final String syllabusId = _requireString(first, 'syllabus_id');
 
     // 3) Comprobar si ya hay preguntas para ese topic_id y syllabus_id
     final countResult = await db.rawQuery(
@@ -53,5 +53,14 @@ class QuestionSeedLoader {
     }
 
     await batch.commit(noResult: true);
+  }
+
+  static String _requireString(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is String && value.isNotEmpty) return value;
+    throw FormatException(
+      'El campo "$key" es obligatorio en el JSON de semillas y debe ser una cadena no vacía.',
+      map,
+    );
   }
 }
