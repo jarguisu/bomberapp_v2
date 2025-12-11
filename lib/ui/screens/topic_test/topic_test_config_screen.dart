@@ -38,7 +38,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
     final block = _selectedBlock;
     if (block == null || _selectedTopicId == null) return null;
     return block.topics.firstWhere(
-      (t) => t.id == _selectedTopicId,
+      (t) => t.topicId == _selectedTopicId,
       orElse: () => block.topics.first,
     );
   }
@@ -66,8 +66,12 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
     final int n = _numQuestions.toInt();
 
     final config = TopicTestConfig(
-      topicId: topic.id,      // 👈 G1 (coincide con topic_id en JSON/BBDD)
-      topicName: topic.label, // 👈 "G1 - Constitución" (texto visible)
+      blockId: topic.blockId,
+      topicCode: topic.topicCode,
+      topicId: topic.topicId,
+      topicName: topic.topicName,
+      entityId: topic.entityId,
+      syllabusId: topic.syllabusId,
       numQuestions: n,
       withTimer: _withTimer,
     );
@@ -296,7 +300,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
               items: _topicsForSelectedBlock
                   .map(
                     (topic) => DropdownMenuItem<String>(
-                      value: topic.id,
+                      value: topic.topicId,
                       child: Text(topic.label),
                     ),
                   )

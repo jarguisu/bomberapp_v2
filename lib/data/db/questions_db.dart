@@ -18,34 +18,42 @@ class QuestionsDb {
       path,
       version: 1,
       onCreate: (db, version) async {
-        // Aquí metes tu SQL de creación de tablas
         await db.execute('''
-          CREATE TABLE topics(
+          CREATE TABLE questions(
             id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            block TEXT
+            block_id TEXT NOT NULL,
+            topic_code TEXT NOT NULL,
+            topic_id TEXT NOT NULL,
+            topic_name TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            entity_name TEXT NOT NULL,
+            syllabus_id TEXT NOT NULL,
+            syllabus_name TEXT NOT NULL,
+            text TEXT NOT NULL,
+            correct TEXT NOT NULL,
+            wrong1 TEXT NOT NULL,
+            wrong2 TEXT NOT NULL,
+            wrong3 TEXT NOT NULL,
+            explanation TEXT,
+            reference TEXT,
+            difficulty INTEGER,
+            source TEXT,
+            year INTEGER
           );
         ''');
-
-        await db.execute('''
-  CREATE TABLE questions(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    topic_id TEXT NOT NULL,
-    topic_name TEXT NOT NULL,
-    text TEXT NOT NULL,
-    correct TEXT NOT NULL,
-    wrong1 TEXT NOT NULL,
-    wrong2 TEXT NOT NULL,
-    wrong3 TEXT NOT NULL,
-    FOREIGN KEY(topic_id) REFERENCES topics(id)
-  );
-''');
 
         await db.execute(
           'CREATE INDEX idx_questions_topic ON questions(topic_id);',
         );
-
-        // Opcional: insertar datos iniciales
+        await db.execute(
+          'CREATE INDEX idx_questions_block ON questions(block_id);',
+        );
+        await db.execute(
+          'CREATE INDEX idx_questions_entity ON questions(entity_id);',
+        );
+        await db.execute(
+          'CREATE INDEX idx_questions_syllabus ON questions(syllabus_id);',
+        );
       },
     );
   }
