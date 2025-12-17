@@ -8,6 +8,7 @@ import '../../widgets/mode_card.dart';
 import '../../widgets/app_footer.dart';
 import '../topic_test/topic_test_config_screen.dart';
 import '../custom_test/custom_test_config_screen.dart';
+import '../simulacro/simulacro_config_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -37,7 +38,6 @@ class HomeScreen extends StatelessWidget {
             children: [
               const HeroCard(),
               const SizedBox(height: 16),
-              // Aside con KPI y estadísticas
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: const [
@@ -53,7 +53,6 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text('Modos de test', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
-              // Cards de modos
               ModeCard(
                 title: 'Test por tema',
                 description:
@@ -67,7 +66,6 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
               ),
-
               const SizedBox(height: 12),
               ModeCard(
                 title: 'Test personalizado',
@@ -86,9 +84,15 @@ class HomeScreen extends StatelessWidget {
               ModeCard(
                 title: 'Simulacro oficial',
                 description:
-                    '100 preguntas · 120 min · −0,33 por fallo · Distribución proporcional.',
+                    '100 preguntas · 120 min · -0,33 por fallo · Distribución proporcional.',
                 buttonLabel: 'Iniciar simulacro',
-                onPressed: () => _showComingSoon(context, 'Simulacro oficial'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SimulacroConfigScreen(),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 12),
               ModeCard(
