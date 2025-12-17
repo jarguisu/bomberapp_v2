@@ -1,44 +1,30 @@
 import 'dart:math';
+
 import '../../data/questions/question_model.dart';
 
-/// Representa una opción de respuesta (correcta o incorrecta)
 class AnswerOption {
   final String text;
   final bool isCorrect;
 
-  const AnswerOption({
-    required this.text,
-    required this.isCorrect,
-  });
+  const AnswerOption({required this.text, required this.isCorrect});
 }
 
-/// Representa una sesión de test en curso
 class TestSession {
   final List<Question> questions;
+  final Map<String, bool> _answersByQuestionId;
 
-  /// Índice de la pregunta actual dentro de [questions]
   int currentIndex;
-
-  /// Registro de respuestas del usuario:
-  /// key = id de la pregunta, value = true (acertada), false (fallada)
-  final Map<int, bool> _answersByQuestionId;
 
   TestSession({
     required this.questions,
+    Map<String, bool>? answersByQuestionId,
     this.currentIndex = 0,
-    Map<int, bool>? answersByQuestionId,
   }) : _answersByQuestionId = answersByQuestionId ?? {};
 
-  /// Pregunta actual
   Question get currentQuestion => questions[currentIndex];
 
-  /// ¿Ya se ha respondido esta pregunta?
   bool get isCurrentAnswered =>
       _answersByQuestionId.containsKey(currentQuestion.id);
-
-  /// Devuelve true si la sesión ha llegado a la última pregunta y ya está contestada.
-  bool get isFinished =>
-      currentIndex == questions.length - 1 && isCurrentAnswered;
 
   /// Número de aciertos
   int get correctCount =>
@@ -59,7 +45,7 @@ class TestSession {
     final q = question ?? currentQuestion;
 
     final options = <AnswerOption>[
-      AnswerOption(text: q.correctAnswer, isCorrect: true),
+      AnswerOption(text: q.correct, isCorrect: true),
       AnswerOption(text: q.wrong1, isCorrect: false),
       AnswerOption(text: q.wrong2, isCorrect: false),
       AnswerOption(text: q.wrong3, isCorrect: false),
@@ -91,10 +77,10 @@ class TestSession {
   }
 
   /// Devuelve true si esa pregunta se respondió correctamente
-  bool? wasQuestionCorrect(int questionId) {
+  bool? wasQuestionCorrect(String questionId) {
     return _answersByQuestionId[questionId];
   }
 
   /// Devuelve el mapa interno de respuestas (útil para estadísticas, guardar progreso, etc.)
-  Map<int, bool> get answers => Map.unmodifiable(_answersByQuestionId);
+  Map<String, bool> get answers => Map.unmodifiable(_answersByQuestionId);
 }
