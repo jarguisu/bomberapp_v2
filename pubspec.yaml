@@ -23,3 +23,6 @@ flutter:
   assets:
     - assets/data/questions_g1.json
     - assets/data/questions_g2.json
+    - assets/data/questions_g3.json
+    - assets/data/questions_g4.json
+    - assets/data/questions_s1.json

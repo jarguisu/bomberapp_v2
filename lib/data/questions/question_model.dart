@@ -1,13 +1,6 @@
 class Question {
   final String id; // ID único de la pregunta
-  final String blockId; // G, E o S
-  final String topicCode; // G1, G2, E3, S1, etc.
-  final String topicId; // ID único del tema en el temario
-  final String topicName; // Nombre visible del tema
-  final String entityId; // Código de la entidad (GEN, CONSVAL...)
-  final String entityName; // Nombre largo de la entidad
-  final String syllabusId; // ID del temario/convocatoria
-  final String syllabusName; // Nombre del temario/convocatoria
+  final String topicId; // Relación con el tema en el catálogo
   final String text; // Enunciado de la pregunta
   final String correct; // Respuesta correcta
   final String wrong1; // Respuesta incorrecta 1
@@ -21,14 +14,7 @@ class Question {
 
   const Question({
     required this.id,
-    required this.blockId,
-    required this.topicCode,
     required this.topicId,
-    required this.topicName,
-    required this.entityId,
-    required this.entityName,
-    required this.syllabusId,
-    required this.syllabusName,
     required this.text,
     required this.correct,
     required this.wrong1,
@@ -44,14 +30,7 @@ class Question {
   factory Question.fromMap(Map<String, dynamic> map) {
     return Question(
       id: map['id'] as String,
-      blockId: map['block_id'] as String,
-      topicCode: map['topic_code'] as String,
       topicId: map['topic_id'] as String,
-      topicName: map['topic_name'] as String,
-      entityId: map['entity_id'] as String,
-      entityName: map['entity_name'] as String,
-      syllabusId: map['syllabus_id'] as String,
-      syllabusName: map['syllabus_name'] as String,
       text: map['text'] as String,
       correct: map['correct'] as String,
       wrong1: map['wrong1'] as String,
@@ -65,19 +44,28 @@ class Question {
     );
   }
 
-  factory Question.fromJson(Map<String, dynamic> json) => Question.fromMap(json);
+  factory Question.fromJson(Map<String, dynamic> json) {
+    // Permitimos JSON con campos extra; sólo leemos los necesarios.
+    return Question(
+      id: json['id'] as String,
+      topicId: json['topic_id'] as String,
+      text: json['text'] as String,
+      correct: json['correct'] as String,
+      wrong1: json['wrong1'] as String,
+      wrong2: json['wrong2'] as String,
+      wrong3: json['wrong3'] as String,
+      explanation: json['explanation'] as String?,
+      reference: json['reference'] as String?,
+      difficulty: json['difficulty'] as int?,
+      source: json['source'] as String?,
+      year: json['year'] as int?,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'block_id': blockId,
-      'topic_code': topicCode,
       'topic_id': topicId,
-      'topic_name': topicName,
-      'entity_id': entityId,
-      'entity_name': entityName,
-      'syllabus_id': syllabusId,
-      'syllabus_name': syllabusName,
       'text': text,
       'correct': correct,
       'wrong1': wrong1,

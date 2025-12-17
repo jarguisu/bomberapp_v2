@@ -27,11 +27,7 @@ class TopicTestConfig {
   });
 
   QuestionTopicFilter toFilter() => QuestionTopicFilter(
-        blockId: blockId,
-        topicCode: topicCode,
         topicId: topicId,
-        entityId: entityId,
-        syllabusId: syllabusId,
       );
 }
 

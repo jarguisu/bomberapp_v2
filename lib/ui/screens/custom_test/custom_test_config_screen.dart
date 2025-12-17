@@ -719,11 +719,7 @@ class _CustomTopic {
   String get label => '$topicCode - $topicName';
 
   QuestionTopicFilter toFilter() => QuestionTopicFilter(
-        blockId: blockId,
-        topicCode: topicCode,
         topicId: topicId,
-        entityId: entityId,
-        syllabusId: syllabusId,
       );
 
   factory _CustomTopic.fromTopicRef(TopicRef ref) {

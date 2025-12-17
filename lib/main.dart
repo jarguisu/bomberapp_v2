@@ -8,12 +8,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Cargar preguntas de temas desde JSON a SQLite (solo si no existen)
-  await QuestionSeedLoader.seedFromJsonAsset(
-    'assets/data/questions_g1.json',
-  );
-  await QuestionSeedLoader.seedFromJsonAsset(
-    'assets/data/questions_g2.json',
-  );
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g1.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g2.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g3.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g4.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_s1.json');
 
   runApp(const BomberApp());
 }
