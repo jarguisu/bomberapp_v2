@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
-import 'ui/screens/home/home_screen.dart';
 import 'data/seed/question_seed_loader.dart';
+import 'ui/screens/home/home_screen.dart';
+import 'ui/screens/login/login_screen.dart';
 
 Future<void> main() async {
   // Necesario para poder cargar assets y usar SQLite antes de runApp
@@ -26,7 +27,7 @@ class BomberApp extends StatelessWidget {
       title: 'BomberAPP',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }
