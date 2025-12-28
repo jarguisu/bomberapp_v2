@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 import 'theme/app_theme.dart';
 import 'data/seed/question_seed_loader.dart';
-import 'ui/screens/home/home_screen.dart';
 import 'ui/screens/login/login_screen.dart';
 
 Future<void> main() async {
-  // Necesario para poder cargar assets y usar SQLite antes de runApp
+  // Necesario para poder usar Firebase, assets y SQLite antes de runApp
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar Firebase
+  await Firebase.initializeApp();
 
   // Cargar preguntas de temas desde JSON a SQLite (solo si no existen)
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g1.json');
@@ -27,7 +31,7 @@ class BomberApp extends StatelessWidget {
       title: 'BomberAPP',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const LoginScreen(),
+      home: const LoginScreen(), // luego aquí pondremos AuthGate
     );
   }
 }
