@@ -3,75 +3,52 @@ import 'package:flutter/material.dart';
 
 import '../../../data/auth/auth_service.dart';
 import '../../../theme/app_colors.dart';
-import 'register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final _auth = AuthService();
 
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
 
   bool _isLoading = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
-  Future<void> _signIn() async {
+  Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await _auth.signInWithEmailPassword(
+      await _auth.registerWithEmailPassword(
+        name: _nameController.text,
         email: _emailController.text,
         password: _passwordController.text,
       );
 
-      // No navegamos aquí.
-      // AuthGate detecta el usuario y te lleva a Home.
+      if (!mounted) return;
+      Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       _showError(_friendlyAuthError(e));
     } catch (_) {
       _showError('Ha ocurrido un error inesperado. Inténtalo de nuevo.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _forgotPassword() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      _showError('Escribe primero un correo válido arriba.');
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      await _auth.sendPasswordResetEmail(email);
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Te he enviado un email para restablecer la contraseña.'),
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      _showError(_friendlyAuthError(e));
-    } catch (_) {
-      _showError('No se pudo enviar el email. Inténtalo de nuevo.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -84,36 +61,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  String _friendlyAuthError(FirebaseAuthException e, {bool isRegister = false}) {
-    // Códigos típicos: https://firebase.google.com/docs/reference/js/auth#autherrorcodes
+  String _friendlyAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
         return 'El correo no es válido.';
-      case 'user-disabled':
-        return 'Este usuario está deshabilitado.';
-      case 'user-not-found':
-        return 'No existe una cuenta con ese correo.';
-      case 'wrong-password':
-        return 'Contraseña incorrecta.';
-      case 'invalid-credential':
-        return 'Credenciales incorrectas.';
-      case 'too-many-requests':
-        return 'Demasiados intentos. Espera un poco y prueba de nuevo.';
-      case 'network-request-failed':
-        return 'Sin conexión. Revisa Internet y prueba de nuevo.';
-
-      // Registro
       case 'email-already-in-use':
         return 'Ese correo ya está registrado. Prueba a iniciar sesión.';
       case 'weak-password':
         return 'La contraseña es demasiado débil (mínimo 6 caracteres).';
       case 'operation-not-allowed':
         return 'El método de login no está habilitado en Firebase.';
+      case 'network-request-failed':
+        return 'Sin conexión. Revisa Internet y prueba de nuevo.';
       default:
-        // Mensaje genérico
-        return isRegister
-            ? 'No se pudo crear la cuenta. (${e.code})'
-            : 'No se pudo iniciar sesión. (${e.code})';
+        return 'No se pudo crear la cuenta. (${e.code})';
     }
   }
 
@@ -123,62 +84,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Crear cuenta'),
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          gradient: const SweepGradient(
-                            colors: [
-                              AppColors.primary,
-                              AppColors.primaryVariant,
-                              AppColors.primary,
-                            ],
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: AppColors.shadowColor,
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.shield,
-                          size: 22,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'BomberAPP',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
                   Text(
-                    'Inicia sesión',
+                    'Regístrate',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Introduce tu correo y contraseña para continuar.',
+                    'Completa tus datos para crear tu cuenta.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -202,6 +134,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
+                          TextFormField(
+                            controller: _nameController,
+                            enabled: !_isLoading,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: const InputDecoration(
+                              labelText: 'Nombre',
+                              hintText: 'Tu nombre',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Introduce tu nombre';
+                              }
+                              if (value.trim().length < 2) {
+                                return 'Introduce un nombre válido';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
                           TextFormField(
                             controller: _emailController,
                             enabled: !_isLoading,
@@ -238,15 +189,33 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _confirmController,
+                            enabled: !_isLoading,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Confirmar contraseña',
+                              hintText: 'Repite la contraseña',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Repite la contraseña';
+                              }
+                              if (value != _passwordController.text) {
+                                return 'Las contraseñas no coinciden';
+                              }
+                              return null;
+                            },
                             onFieldSubmitted: (_) =>
-                                _isLoading ? null : _signIn(),
+                                _isLoading ? null : _register(),
                           ),
                           const SizedBox(height: 16),
-
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _signIn,
+                              onPressed: _isLoading ? null : _register,
                               style: ElevatedButton.styleFrom(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14),
@@ -267,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     )
                                   : Text(
-                                      'Entrar',
+                                      'Crear cuenta',
                                       style:
                                           theme.textTheme.labelLarge?.copyWith(
                                         fontWeight: FontWeight.w800,
@@ -275,51 +244,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                             ),
                           ),
-
-                          const SizedBox(height: 10),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: _isLoading
-                                      ? null
-                                      : () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const RegisterScreen(),
-                                            ),
-                                          );
-                                        },
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Crear cuenta',
-                                    style: theme.textTheme.labelLarge
-                                        ?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
                           const SizedBox(height: 8),
-
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed:
-                                  _isLoading ? null : _forgotPassword,
-                              child: const Text('He olvidado la contraseña'),
-                            ),
+                          TextButton(
+                            onPressed:
+                                _isLoading ? null : () => Navigator.pop(context),
+                            child: const Text('Ya tengo cuenta'),
                           ),
                         ],
                       ),

@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'theme/app_theme.dart';
 import 'data/seed/question_seed_loader.dart';
 import 'ui/screens/login/login_screen.dart';
+import 'ui/auth/auth_gate.dart';
+
 
 Future<void> main() async {
   // Necesario para poder usar Firebase, assets y SQLite antes de runApp
@@ -31,7 +33,7 @@ class BomberApp extends StatelessWidget {
       title: 'BomberAPP',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const LoginScreen(), // luego aquí pondremos AuthGate
+      home: const AuthGate(), // luego aquí pondremos AuthGate
     );
   }
 }
