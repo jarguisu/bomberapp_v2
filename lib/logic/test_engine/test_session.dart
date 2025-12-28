@@ -26,20 +26,26 @@ class TestSession {
   bool get isCurrentAnswered =>
       _answersByQuestionId.containsKey(currentQuestion.id);
 
-  /// Número de aciertos
+  /// Numero de aciertos
   int get correctCount =>
       _answersByQuestionId.values.where((v) => v == true).length;
 
-  /// Número de fallos
+  /// Numero de fallos
   int get wrongCount =>
       _answersByQuestionId.values.where((v) => v == false).length;
 
-  /// Puntuación con penalización −0,33 por fallo
-  double get scoreWithPenalty =>
-      correctCount - wrongCount * 0.33;
+  double get _pointsPerQuestion =>
+      questions.isEmpty ? 0 : 10 / questions.length;
+
+  /// Puntuacion sobre 10 con penalizacion -0,33 por fallo.
+  /// Acierto = + (10 / nPreguntas). Blanco = 0. Fallo = -0,33.
+  double get scoreWithPenalty {
+    final raw = correctCount * _pointsPerQuestion - wrongCount * 0.33;
+    return raw.clamp(0, 10).toDouble();
+  }
 
   /// Devuelve las 4 opciones de respuesta de una pregunta, ya mezcladas.
-  /// Si quieres usarlo para otra pregunta, pásala como parámetro;
+  /// Si quieres usarlo para otra pregunta, pasala como parametro;
   /// si no, usa la [currentQuestion].
   List<AnswerOption> getShuffledOptions({Question? question}) {
     final q = question ?? currentQuestion;
@@ -76,11 +82,11 @@ class TestSession {
     }
   }
 
-  /// Devuelve true si esa pregunta se respondió correctamente
+  /// Devuelve true si esa pregunta se respondio correctamente
   bool? wasQuestionCorrect(String questionId) {
     return _answersByQuestionId[questionId];
   }
 
-  /// Devuelve el mapa interno de respuestas (útil para estadísticas, guardar progreso, etc.)
+  /// Devuelve el mapa interno de respuestas (util para estadisticas, guardar progreso, etc.)
   Map<String, bool> get answers => Map.unmodifiable(_answersByQuestionId);
 }

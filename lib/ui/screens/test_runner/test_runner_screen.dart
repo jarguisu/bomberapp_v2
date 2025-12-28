@@ -232,7 +232,10 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       }
     }
 
-    final score = correct - wrong * 0.33;
+    final pointsPerQuestion =
+        _questions.isEmpty ? 0 : 10 / _questions.length;
+    final rawScore = correct * pointsPerQuestion - wrong * 0.33;
+    final score = rawScore.clamp(0, 10).toDouble();
 
     setState(() {
       _isFinished = true;
@@ -877,7 +880,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
               const SizedBox(height: 8),
               _resultRow(
                 theme,
-                label: 'Puntuación (−0,33 por fallo)',
+                label: 'Puntuacion sobre 10 (-0,33 por fallo)',
                 value: _finalScore.toStringAsFixed(2),
               ),
             ],
@@ -924,3 +927,5 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
     );
   }
 }
+
+
