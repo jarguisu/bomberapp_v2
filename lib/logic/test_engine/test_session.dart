@@ -12,11 +12,13 @@ class AnswerOption {
 class TestSession {
   final List<Question> questions;
   final Map<String, bool> _answersByQuestionId;
+  final Set<String> failedQuestionIds;
 
   int currentIndex;
 
   TestSession({
     required this.questions,
+    this.failedQuestionIds = const {},
     Map<String, bool>? answersByQuestionId,
     this.currentIndex = 0,
   }) : _answersByQuestionId = answersByQuestionId ?? {};

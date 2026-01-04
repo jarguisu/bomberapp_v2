@@ -321,20 +321,20 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
             hint: 'De 20 a 100, en pasos de 10.',
             child: Row(
               children: [
-                Expanded(
-                  child: Slider(
-                    value: _numQuestions,
-                    min: 20,
-                    max: 100,
-                    divisions: 8,
-                    label: _numQuestions.toInt().toString(),
-                    onChanged: (value) {
-                      setState(() {
-                        _numQuestions = value;
-                      });
-                    },
+                  Expanded(
+                    child: Slider(
+                      value: _numQuestions,
+                      min: 10,
+                      max: 100,
+                      divisions: 9,
+                      label: _numQuestions.toInt().toString(),
+                      onChanged: (value) {
+                        setState(() {
+                          _numQuestions = value;
+                        });
+                      },
+                    ),
                   ),
-                ),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

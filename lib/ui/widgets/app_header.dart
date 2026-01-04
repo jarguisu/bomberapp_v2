@@ -60,9 +60,9 @@ class AppHeader extends StatelessWidget {
             children: [
               OutlinedButton(
                 onPressed: () {
-                  // TODO: Navegar a estadísticas
+                  // TODO: Navegar a estadisticas
                 },
-                child: const Text('Estadísticas'),
+                child: const Text('Estadisticas'),
               ),
               const SizedBox(width: 8),
               OutlinedButton(

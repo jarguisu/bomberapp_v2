@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../data/stats/stats_repository.dart';
 import '../../../theme/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/hero_card.dart';
@@ -9,19 +11,21 @@ import '../../widgets/app_footer.dart';
 import '../topic_test/topic_test_config_screen.dart';
 import '../custom_test/custom_test_config_screen.dart';
 import '../simulacro/simulacro_config_screen.dart';
+import '../failed_questions/failed_questions_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   void _showComingSoon(BuildContext context, String modeName) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$modeName aún no está implementado.')),
+      SnackBar(content: Text('$modeName aun no esta implementado.')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final statsRepository = StatsRepository();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -31,81 +35,101 @@ class HomeScreen extends StatelessWidget {
         title: const AppHeader(),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const HeroCard(),
-              const SizedBox(height: 16),
-              Column(
+        child: StreamBuilder<StatsSummary>(
+          stream: statsRepository.summaryStream(),
+          builder: (context, snapshot) {
+            final stats = snapshot.data ?? StatsSummary.empty();
+            final isLoading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: const [
-                  KpiPanel(totalTests: 12, label: 'en total'),
-                  SizedBox(height: 12),
-                  StatsPanel(
-                    questionsAnswered: 320,
-                    questionsCorrect: 228,
-                    questionsWrong: 92,
+                children: [
+                  const HeroCard(),
+                  const SizedBox(height: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      KpiPanel(totalTests: stats.totalAttempts, label: 'en total'),
+                      const SizedBox(height: 12),
+                      StatsPanel(
+                        questionsAnswered: stats.totalAnswered,
+                        questionsCorrect: stats.totalCorrect,
+                        questionsWrong: stats.totalWrong,
+                      ),
+                      if (isLoading) ...[
+                        const SizedBox(height: 12),
+                        const LinearProgressIndicator(minHeight: 6),
+                      ],
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text('Modos de test', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              ModeCard(
-                title: 'Test por tema',
-                description:
-                    'Elige un tema concreto y practica preguntas específicas.',
-                buttonLabel: 'Empezar',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const TopicTestConfigScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              ModeCard(
-                title: 'Test personalizado',
-                description:
-                    'Selecciona libremente los temas y define cuántas preguntas quieres.',
-                buttonLabel: 'Configurar',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const CustomTestConfigScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              ModeCard(
-                title: 'Simulacro oficial',
-                description:
-                    '100 preguntas · 120 min · -0,33 por fallo · Distribución proporcional.',
-                buttonLabel: 'Iniciar simulacro',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SimulacroConfigScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
+                  const SizedBox(height: 16),
+                  Text('Modos de test', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  ModeCard(
+                    title: 'Test por tema',
+                    description:
+                        'Elige un tema concreto y practica preguntas especificas.',
+                    buttonLabel: 'Empezar',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TopicTestConfigScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  ModeCard(
+                    title: 'Test personalizado',
+                    description:
+                        'Selecciona libremente los temas y define cuantas preguntas quieres.',
+                    buttonLabel: 'Configurar',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CustomTestConfigScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  ModeCard(
+                    title: 'Simulacro oficial',
+                    description:
+                        '100 preguntas | 120 min | -0,33 por fallo | Distribucion proporcional.',
+                    buttonLabel: 'Iniciar simulacro',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SimulacroConfigScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
               ModeCard(
                 title: 'Preguntas falladas',
                 description:
-                    'Revisa tus errores acumulados y vuelve a intentarlo para mejorar tu puntuación.',
+                    'Revisa tus errores acumulados y vuelve a intentarlo para mejorar tu puntuacion.',
                 buttonLabel: 'Ver preguntas falladas',
-                onPressed: () => _showComingSoon(context, 'Preguntas falladas'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const FailedQuestionsScreen(),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-              const AppFooter(),
-            ],
-          ),
+                  const SizedBox(height: 16),
+                  const AppFooter(),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

@@ -568,21 +568,21 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
           ),
           const SizedBox(height: 6),
           Row(
-            children: [
-              Expanded(
-                child: Slider(
-                  value: _numQuestions,
-                  min: 20,
-                  max: 100,
-                  divisions: 8,
-                  label: _numQuestions.toInt().toString(),
-                  onChanged: (value) {
-                    setState(() {
-                      _numQuestions = value;
-                    });
-                  },
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: _numQuestions,
+                    min: 10,
+                    max: 100,
+                    divisions: 9,
+                    label: _numQuestions.toInt().toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        _numQuestions = value;
+                      });
+                    },
+                  ),
                 ),
-              ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

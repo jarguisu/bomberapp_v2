@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../stats/stats_repository.dart';
+
 class AuthService {
   AuthService({
     FirebaseAuth? auth,
@@ -58,6 +60,60 @@ class AuthService {
     return _auth.sendPasswordResetEmail(email: email.trim());
   }
 
+  Future<void> updateDisplayName(String name) async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('No hay usuario autenticado.');
+
+    await user.updateDisplayName(name.trim());
+    await _db.collection('users').doc(user.uid).update({'name': name.trim()});
+  }
+
+  Future<void> updatePhotoUrl(String? photoUrl) async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('No hay usuario autenticado.');
+
+    await user.updatePhotoURL(photoUrl?.trim());
+    await _db
+        .collection('users')
+        .doc(user.uid)
+        .update({'photoUrl': photoUrl?.trim() ?? ''});
+  }
+
+  Future<void> updateEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('No hay usuario autenticado.');
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email ?? '',
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+    await user.updateEmail(newEmail.trim());
+    await _db.collection('users').doc(user.uid).update({
+      'email': newEmail.trim(),
+    });
+  }
+
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('No hay usuario autenticado.');
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email ?? '',
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
   Future<void> _createUserDocIfNeeded({
     required String uid,
     required String email,
@@ -91,14 +147,7 @@ class AuthService {
 
       // Documento de stats base (dashboard)
       final summaryRef = ref.collection('stats').doc('summary');
-      tx.set(summaryRef, {
-        'totalAttempts': 0,
-        'totalCorrect': 0,
-        'totalWrong': 0,
-        'bestScore': 0.0,
-        'streakDays': 0,
-        'lastAttemptAt': null,
-      });
+      tx.set(summaryRef, StatsSummary.initialData());
     });
   }
 }

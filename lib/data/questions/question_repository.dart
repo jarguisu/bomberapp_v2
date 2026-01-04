@@ -23,6 +23,8 @@ abstract class QuestionRepository {
     bool randomOrder,
   });
 
+  Future<List<Question>> getQuestionsByIds(List<String> ids);
+
   /// Elimina todas las preguntas (útil para reseed completo).
   Future<void> clearAll();
 }
@@ -87,5 +89,22 @@ class SqliteQuestionRepository implements QuestionRepository {
   Future<void> clearAll() async {
     final db = await QuestionsDb.database;
     await db.delete('questions');
+  }
+
+  @override
+  Future<List<Question>> getQuestionsByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final db = await QuestionsDb.database;
+
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    final result = await db.rawQuery(
+      '''
+      SELECT * FROM questions
+      WHERE id IN ($placeholders)
+      ''',
+      ids,
+    );
+
+    return result.map((row) => Question.fromMap(row)).toList();
   }
 }

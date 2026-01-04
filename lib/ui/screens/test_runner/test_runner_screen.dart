@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
 import '../../../data/questions/question_repository.dart';
 import '../../../data/questions/question_model.dart';
+import '../../../data/stats/stats_repository.dart';
+import '../../../data/failed_questions/failed_questions_repository.dart';
 import '../../../logic/test_engine/test_engine.dart';
 import '../../../logic/test_engine/test_session.dart';
 import '../../widgets/app_footer.dart';
@@ -13,7 +15,7 @@ class TestRunnerScreen extends StatefulWidget {
   final String title;
   final bool withTimer;
 
-  /// Función que, dado un [TestEngine], construye la sesión de test.
+  /// FunciÃ³n que, dado un [TestEngine], construye la sesiÃ³n de test.
   final Future<TestSession> Function(TestEngine engine) sessionBuilder;
 
   const TestRunnerScreen({
@@ -23,7 +25,7 @@ class TestRunnerScreen extends StatefulWidget {
     required this.sessionBuilder,
   });
 
-  /// Named constructor para “test por tema”.
+  /// Named constructor para â€œtest por temaâ€.
   factory TestRunnerScreen.forTopic({required TopicTestConfig config}) {
     return TestRunnerScreen(
       title: config.topicName,
@@ -32,12 +34,28 @@ class TestRunnerScreen extends StatefulWidget {
     );
   }
 
-  /// Named constructor para “test personalizado” (varios temas).
+  /// Named constructor para â€œtest personalizadoâ€ (varios temas).
   factory TestRunnerScreen.forCustom({required CustomTestConfig config}) {
     return TestRunnerScreen(
       title: 'Test personalizado',
       withTimer: config.withTimer,
       sessionBuilder: (engine) => engine.startCustomTest(config),
+    );
+  }
+
+  /// Named constructor para test de preguntas falladas.
+  factory TestRunnerScreen.forFailedQuestions({
+    required List<Question> questions,
+  }) {
+    return TestRunnerScreen(
+      title: 'Preguntas falladas',
+      withTimer: false,
+      sessionBuilder: (_) => Future.value(
+        TestSession(
+          questions: questions,
+          failedQuestionIds: questions.map((q) => q.id).toSet(),
+        ),
+      ),
     );
   }
 
@@ -47,6 +65,10 @@ class TestRunnerScreen extends StatefulWidget {
 
 class _TestRunnerScreenState extends State<TestRunnerScreen> {
   late final TestEngine _engine;
+  final StatsRepository _statsRepository = StatsRepository();
+  final FailedQuestionsRepository _failedQuestionsRepository =
+      FailedQuestionsRepository();
+  Set<String> _failedQuestionIds = {};
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -72,9 +94,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   @override
   void initState() {
     super.initState();
-    _engine = TestEngine(
-      questionRepository: SqliteQuestionRepository(),
-    );
+    _engine = TestEngine(questionRepository: SqliteQuestionRepository());
     _loadSession();
   }
 
@@ -95,6 +115,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       final session = await widget.sessionBuilder(_engine);
 
       final questions = session.questions;
+      _failedQuestionIds = session.failedQuestionIds;
       final optionsPerQuestion = questions
           .map((q) => session.getShuffledOptions(question: q))
           .toList();
@@ -102,8 +123,11 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       setState(() {
         _questions = questions;
         _optionsPerQuestion = optionsPerQuestion;
-        _selectedOptionIndices =
-            List<int?>.filled(questions.length, null, growable: false);
+        _selectedOptionIndices = List<int?>.filled(
+          questions.length,
+          null,
+          growable: false,
+        );
         _marked = List<bool>.filled(questions.length, false, growable: false);
         _currentIndex = 0;
         _isLoading = false;
@@ -123,8 +147,10 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   void _startTimer() {
     _timer?.cancel();
 
-    final totalSeconds =
-        (_questions.length * _secondsPerQuestion).clamp(600, 120 * 60);
+    final totalSeconds = (_questions.length * _secondsPerQuestion).clamp(
+      600,
+      120 * 60,
+    );
     _remaining = Duration(seconds: totalSeconds);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -143,7 +169,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
     });
   }
 
-  // --- Lógica de selección de opciones ---
+  // --- LÃ³gica de selecciÃ³n de opciones ---
 
   void _onSelectOption(int optionIndex) {
     if (_isFinished) return;
@@ -190,14 +216,15 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
 
     final responded = _answeredCount;
     if (!auto) {
-      final confirmed = await showDialog<bool>(
+      final confirmed =
+          await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Finalizar test'),
               content: Text(
                 'Has contestado $responded de ${_questions.length} preguntas.\n'
-                'Una vez finalizado, verás la corrección.\n\n'
-                '¿Quieres finalizar el test?',
+                'Una vez finalizado, veras la correccion.\n\n'
+                'Quieres finalizar el test?',
               ),
               actions: [
                 TextButton(
@@ -220,6 +247,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
 
     int correct = 0;
     int wrong = 0;
+    final List<FailedQuestionWrite> failedAttempts = [];
+    final List<String> resolvedFailed = [];
 
     for (var i = 0; i < _questions.length; i++) {
       final selectedIndex = _selectedOptionIndices[i];
@@ -227,15 +256,24 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       final option = _optionsPerQuestion[i][selectedIndex];
       if (option.isCorrect) {
         correct++;
+        if (_failedQuestionIds.contains(_questions[i].id)) {
+          resolvedFailed.add(_questions[i].id);
+        }
       } else {
         wrong++;
+        failedAttempts.add(
+          FailedQuestionWrite(
+            questionId: _questions[i].id,
+            selectedAnswer: option.text,
+          ),
+        );
       }
     }
 
-    final pointsPerQuestion =
-        _questions.isEmpty ? 0 : 10 / _questions.length;
+    final pointsPerQuestion = _questions.isEmpty ? 0 : 10 / _questions.length;
     final rawScore = correct * pointsPerQuestion - wrong * 0.33;
     final score = rawScore.clamp(0, 10).toDouble();
+    final answered = correct + wrong;
 
     setState(() {
       _isFinished = true;
@@ -243,6 +281,55 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       _finalWrong = wrong;
       _finalScore = score;
     });
+
+    unawaited(
+      _statsRepository
+          .addTestResult(answered: answered, correct: correct, wrong: wrong)
+          .catchError((_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'No se pudieron guardar las estadisticas del test.',
+                ),
+              ),
+            );
+          }),
+    );
+
+    if (failedAttempts.isNotEmpty) {
+      unawaited(
+        _failedQuestionsRepository.addFailedAttempts(failedAttempts).catchError(
+          (_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'No se pudieron registrar las preguntas falladas.',
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    if (resolvedFailed.isNotEmpty) {
+      unawaited(
+        _failedQuestionsRepository
+            .removeFailedQuestions(resolvedFailed)
+            .catchError((_) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'No se pudieron limpiar las preguntas acertadas.',
+                  ),
+                ),
+              );
+            }),
+      );
+    }
   }
 
   @override
@@ -255,8 +342,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
-                ? _buildError(theme)
-                : _buildContent(theme),
+            ? _buildError(theme)
+            : _buildContent(theme),
       ),
     );
   }
@@ -267,11 +354,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            color: AppColors.error,
-            size: 40,
-          ),
+          Icon(Icons.error_outline, color: AppColors.error, size: 40),
           const SizedBox(height: 12),
           Text(
             'No se ha podido cargar el test.',
@@ -356,8 +439,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                                 vertical: 6,
                               ),
                               backgroundColor: isMarked
-                                  ? AppColors.error
-                                      .withValues(alpha: 0.06)
+                                  ? AppColors.error.withValues(alpha: 0.06)
                                   : AppColors.background,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -408,8 +490,9 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.primary
-                                          .withValues(alpha: 0.12)
+                                      ? AppColors.primary.withValues(
+                                          alpha: 0.12,
+                                        )
                                       : AppColors.background,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
@@ -433,8 +516,9 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                                           width: 2,
                                         ),
                                         color: isSelected
-                                            ? AppColors.primary
-                                                .withValues(alpha: 0.2)
+                                            ? AppColors.primary.withValues(
+                                                alpha: 0.2,
+                                              )
                                             : Colors.transparent,
                                       ),
                                       child: Center(
@@ -470,7 +554,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
 
                 const SizedBox(height: 16),
 
-                // Índice de preguntas
+                // Indice de preguntas
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.card,
@@ -489,7 +573,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Índice de preguntas',
+                        'Indice de preguntas',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -500,11 +584,11 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 6,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 1.1,
-                        ),
+                              crossAxisCount: 6,
+                              mainAxisSpacing: 8,
+                              crossAxisSpacing: 8,
+                              childAspectRatio: 1.1,
+                            ),
                         itemCount: _questions.length,
                         itemBuilder: (context, index) {
                           final answered =
@@ -565,8 +649,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                           _legendDot(
                             theme,
                             label: 'Contestada',
-                            color: AppColors.primary
-                                .withValues(alpha: 0.25),
+                            color: AppColors.primary.withValues(alpha: 0.25),
                           ),
                           _legendDot(
                             theme,
@@ -578,6 +661,8 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                _buildFinishButton(theme),
 
                 const SizedBox(height: 80),
                 const AppFooter(),
@@ -604,9 +689,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: AppColors.border.withValues(alpha: 0.7),
-            ),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
           ),
         ),
         const SizedBox(width: 6),
@@ -623,10 +706,12 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   }
 
   Widget _buildHeader(ThemeData theme) {
-    final minutes =
-        _remaining != null ? _remaining!.inMinutes.remainder(60) : null;
-    final seconds =
-        _remaining != null ? _remaining!.inSeconds.remainder(60) : null;
+    final minutes = _remaining != null
+        ? _remaining!.inMinutes.remainder(60)
+        : null;
+    final seconds = _remaining != null
+        ? _remaining!.inSeconds.remainder(60)
+        : null;
 
     final hasTimer = widget.withTimer && _remaining != null;
 
@@ -634,9 +719,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
-        border: Border(
-          bottom: BorderSide(color: AppColors.border),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -670,11 +753,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.shield,
-                  size: 18,
-                  color: Colors.black,
-                ),
+                child: const Icon(Icons.shield, size: 18, color: Colors.black),
               ),
               const SizedBox(width: 8),
               Text(
@@ -694,9 +773,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
                 LinearProgressIndicator(
                   value: _progressPct,
                   backgroundColor: AppColors.background,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.primary,
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                   minHeight: 8,
                   borderRadius: BorderRadius.circular(999),
                 ),
@@ -726,8 +803,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
           const SizedBox(width: 8),
           if (hasTimer)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: AppColors.border),
@@ -753,9 +829,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
-        border: Border(
-          top: BorderSide(color: AppColors.border),
-        ),
+        border: Border(top: BorderSide(color: AppColors.border)),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -772,54 +846,92 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
               child: OutlinedButton(
                 onPressed: isFirst ? null : _goPrev,
                 style: OutlinedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 10,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('← Anterior'),
+                child: const Text('Anterior'),
               ),
             ),
             const SizedBox(width: 8),
-            IconButton(
-              onPressed: _clearCurrentAnswer,
-              tooltip: 'Borrar respuesta',
-              icon: const Icon(Icons.backspace_outlined),
+            Expanded(
+              flex: 2,
+              child: OutlinedButton.icon(
+                onPressed: _clearCurrentAnswer,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.backspace_outlined),
+                label: const Text('Borrar seleccion'),
+              ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton(
                 onPressed: isLast ? null : _goNext,
                 style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 10,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Siguiente →'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () => _finishTest(auto: false),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Finalizar',
-                style: TextStyle(fontWeight: FontWeight.w800),
+                child: const Text('Siguiente'),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFinishButton(ThemeData theme) {
+    final isLast = _currentIndex == _questions.length - 1;
+
+    final child = isLast
+        ? ElevatedButton(
+            onPressed: () => _finishTest(auto: false),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Finalizar test',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+          )
+        : OutlinedButton(
+            onPressed: () => _finishTest(auto: false),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Finalizar'),
+          );
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 240),
+        child: child,
       ),
     );
   }
@@ -888,9 +1000,10 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
         ),
         const SizedBox(height: 20),
         ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back),
-          label: const Text('Volver'),
+          onPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
+          icon: const Icon(Icons.home_outlined),
+          label: const Text('Finalizar'),
         ),
         const SizedBox(height: 8),
         const AppFooter(),
@@ -927,5 +1040,3 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
     );
   }
 }
-
-
