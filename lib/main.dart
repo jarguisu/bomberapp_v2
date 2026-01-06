@@ -19,6 +19,18 @@ Future<void> main() async {
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g2.json');
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g3.json');
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g4.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g5.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g6.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g7.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g8.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g9.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g10.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g11.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e3.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e4.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e5.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e6.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e7.json');
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_s1.json');
 
   runApp(const BomberApp());

@@ -31,4 +31,16 @@ flutter:
     - assets/data/questions_g2.json
     - assets/data/questions_g3.json
     - assets/data/questions_g4.json
+    - assets/data/questions_g5.json
+    - assets/data/questions_g6.json
+    - assets/data/questions_g7.json
+    - assets/data/questions_g8.json
+    - assets/data/questions_g9.json
+    - assets/data/questions_g10.json
+    - assets/data/questions_g11.json
+    - assets/data/questions_e3.json
+    - assets/data/questions_e4.json
+    - assets/data/questions_e5.json
+    - assets/data/questions_e6.json
+    - assets/data/questions_e7.json
     - assets/data/questions_s1.json
