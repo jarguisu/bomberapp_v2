@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
+import '../screens/settings/settings_screen.dart';
 
 class AppHeader extends StatelessWidget {
   const AppHeader({super.key});
@@ -58,14 +60,18 @@ class AppHeader extends StatelessWidget {
             children: [
               OutlinedButton(
                 onPressed: () {
-                  // TODO: Navegar a estadísticas
+                  // TODO: Navegar a estadisticas
                 },
-                child: const Text('Estadísticas'),
+                child: const Text('Estadisticas'),
               ),
               const SizedBox(width: 8),
               OutlinedButton(
                 onPressed: () {
-                  // TODO: Navegar a ajustes
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SettingsScreen(),
+                    ),
+                  );
                 },
                 child: const Text('Ajustes'),
               ),

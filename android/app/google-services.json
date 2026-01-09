@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "759518440446",
+    "project_id": "bomberapp-586fe",
+    "storage_bucket": "bomberapp-586fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:759518440446:android:ca798f037be3024df12eaf",
+        "android_client_info": {
+          "package_name": "com.example.bomber_app2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKbNgIncrQ-yn52ZPONWIwwJ7nKhdGcaA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
