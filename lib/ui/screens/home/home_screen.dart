@@ -13,6 +13,7 @@ import '../custom_test/custom_test_config_screen.dart';
 import '../simulacro/simulacro_config_screen.dart';
 import '../failed_questions/failed_questions_screen.dart';
 import '../settings/settings_screen.dart';
+import '../stats/stats_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -38,7 +39,13 @@ class HomeScreen extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
-          if (index == 2) {
+          if (index == 1) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const StatsScreen(),
+              ),
+            );
+          } else if (index == 2) {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => const SettingsScreen(),

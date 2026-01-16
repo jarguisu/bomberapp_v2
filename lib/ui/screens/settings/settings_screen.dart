@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/auth/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import '../stats/stats_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -149,6 +150,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: (index) {
           if (index == 0) {
             Navigator.of(context).popUntil((route) => route.isFirst);
+          } else if (index == 1) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const StatsScreen(),
+              ),
+            );
           }
         },
         showSelectedLabels: false,
