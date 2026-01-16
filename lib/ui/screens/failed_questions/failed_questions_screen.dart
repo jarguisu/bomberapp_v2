@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../data/failed_questions/failed_questions_repository.dart';
 import '../../../data/questions/question_model.dart';
@@ -300,7 +300,7 @@ class _FailedQuestionCard extends StatelessWidget {
                 ),
               const Spacer(),
               Text(
-                'Fallada ${record.wrongCount} vez${record.wrongCount > 1 ? 'es' : ''}',
+                'Fallada ${record.wrongCount} ${record.wrongCount == 1 ? 'vez' : 'veces'}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -394,3 +394,5 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+
+

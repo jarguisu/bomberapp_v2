@@ -318,14 +318,14 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
           // Número de preguntas
           _buildField(
             label: 'Número de preguntas',
-            hint: 'De 20 a 100, en pasos de 10.',
+            hint: 'De 5 a 50, en pasos de 5.',
             child: Row(
               children: [
                   Expanded(
                     child: Slider(
                       value: _numQuestions,
-                      min: 10,
-                      max: 100,
+                      min: 5,
+                      max: 50,
                       divisions: 9,
                       label: _numQuestions.toInt().toString(),
                       onChanged: (value) {
@@ -359,7 +359,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
           // Cronómetro
           _buildField(
             label: 'Cronómetro',
-            hint: '72s por pregunta (1,2 min). Ejemplos: 20→24 min, 100→120 min.',
+            hint: '72s por pregunta (1,2 min). Ejemplos: 5→6 min, 50→60 min.',
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

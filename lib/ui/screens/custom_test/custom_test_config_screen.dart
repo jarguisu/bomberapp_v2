@@ -572,8 +572,8 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
                 Expanded(
                   child: Slider(
                     value: _numQuestions,
-                    min: 10,
-                    max: 100,
+                    min: 5,
+                    max: 50,
                     divisions: 9,
                     label: _numQuestions.toInt().toString(),
                     onChanged: (value) {
@@ -602,7 +602,7 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'De 20 a 100, en pasos de 10.',
+            'De 5 a 50, en pasos de 5.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.textMuted,
               fontSize: 12,
@@ -649,7 +649,7 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Usamos ~1,2 min por pregunta (72 s). Ej.: 20→24 min, 100→120 min.',
+            'Usamos ~1,2 min por pregunta (72 s). Ej.: 5→6 min, 50→60 min.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.textMuted,
               fontSize: 12,
