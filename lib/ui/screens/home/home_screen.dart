@@ -12,6 +12,7 @@ import '../topic_test/topic_test_config_screen.dart';
 import '../custom_test/custom_test_config_screen.dart';
 import '../simulacro/simulacro_config_screen.dart';
 import '../failed_questions/failed_questions_screen.dart';
+import '../settings/settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -33,6 +34,34 @@ class HomeScreen extends StatelessWidget {
         toolbarHeight: 72,
         titleSpacing: 0,
         title: const AppHeader(),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 2) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const SettingsScreen(),
+              ),
+            );
+          }
+        },
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_rounded),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_rounded),
+            label: '',
+          ),
+        ],
       ),
       body: SafeArea(
         child: StreamBuilder<StatsSummary>(

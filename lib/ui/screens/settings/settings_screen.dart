@@ -142,6 +142,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Ajustes'),
         backgroundColor: AppColors.background,
         elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
+        },
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_rounded),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_rounded),
+            label: '',
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
