@@ -68,7 +68,6 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
   final StatsRepository _statsRepository = StatsRepository();
   final FailedQuestionsRepository _failedQuestionsRepository =
       FailedQuestionsRepository();
-  Set<String> _failedQuestionIds = {};
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -115,7 +114,6 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       final session = await widget.sessionBuilder(_engine);
 
       final questions = session.questions;
-      _failedQuestionIds = session.failedQuestionIds;
       final optionsPerQuestion = questions
           .map((q) => session.getShuffledOptions(question: q))
           .toList();
@@ -248,7 +246,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
     int correct = 0;
     int wrong = 0;
     final List<FailedQuestionWrite> failedAttempts = [];
-    final List<String> resolvedFailed = [];
+    final List<String> correctQuestionIds = [];
 
     for (var i = 0; i < _questions.length; i++) {
       final selectedIndex = _selectedOptionIndices[i];
@@ -256,9 +254,7 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       final option = _optionsPerQuestion[i][selectedIndex];
       if (option.isCorrect) {
         correct++;
-        if (_failedQuestionIds.contains(_questions[i].id)) {
-          resolvedFailed.add(_questions[i].id);
-        }
+        correctQuestionIds.add(_questions[i].id);
       } else {
         wrong++;
         failedAttempts.add(
@@ -314,16 +310,16 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
       );
     }
 
-    if (resolvedFailed.isNotEmpty) {
+    if (correctQuestionIds.isNotEmpty) {
       unawaited(
         _failedQuestionsRepository
-            .removeFailedQuestions(resolvedFailed)
+            .markQuestionsCorrect(correctQuestionIds)
             .catchError((_) {
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                    'No se pudieron limpiar las preguntas acertadas.',
+                    'No se pudieron actualizar las preguntas acertadas.',
                   ),
                 ),
               );

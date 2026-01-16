@@ -324,7 +324,7 @@ class _FailedQuestionCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tu respuesta: ${record.selectedAnswer}',
+            'Tu respuesta: ${record.lastSelectedAnswer}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.error,
               fontWeight: FontWeight.w600,
