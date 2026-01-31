@@ -247,14 +247,30 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
     int wrong = 0;
     final List<FailedQuestionWrite> failedAttempts = [];
     final List<String> correctQuestionIds = [];
+    final Map<String, TopicStatSummary> byTopic = {};
 
     for (var i = 0; i < _questions.length; i++) {
       final selectedIndex = _selectedOptionIndices[i];
       if (selectedIndex == null) continue;
       final option = _optionsPerQuestion[i][selectedIndex];
+      final topicId = _questions[i].topicId;
       if (option.isCorrect) {
         correct++;
         correctQuestionIds.add(_questions[i].id);
+        final current = byTopic[topicId];
+        if (current == null) {
+          byTopic[topicId] = TopicStatSummary(
+            topicId: topicId,
+            correct: 1,
+            wrong: 0,
+            answered: 1,
+          );
+        } else {
+          byTopic[topicId] = current.copyWith(
+            correct: current.correct + 1,
+            answered: current.answered + 1,
+          );
+        }
       } else {
         wrong++;
         failedAttempts.add(
@@ -263,6 +279,20 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
             selectedAnswer: option.text,
           ),
         );
+        final current = byTopic[topicId];
+        if (current == null) {
+          byTopic[topicId] = TopicStatSummary(
+            topicId: topicId,
+            correct: 0,
+            wrong: 1,
+            answered: 1,
+          );
+        } else {
+          byTopic[topicId] = current.copyWith(
+            wrong: current.wrong + 1,
+            answered: current.answered + 1,
+          );
+        }
       }
     }
 
@@ -280,7 +310,14 @@ class _TestRunnerScreenState extends State<TestRunnerScreen> {
 
     unawaited(
       _statsRepository
-          .addTestResult(answered: answered, correct: correct, wrong: wrong)
+          .addTestResult(
+            answered: answered,
+            correct: correct,
+            wrong: wrong,
+            totalQuestions: _questions.length,
+            score: score,
+            byTopic: byTopic,
+          )
           .catchError((_) {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(

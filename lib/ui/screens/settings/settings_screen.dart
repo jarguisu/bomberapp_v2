@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../data/auth/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import 'pro_subscriptions_screen.dart';
+import 'user_profile_edit_screen.dart';
 import '../stats/stats_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -13,34 +15,13 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _auth = AuthService();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _emailPasswordController = TextEditingController();
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
 
-  bool _savingName = false;
-  bool _savingEmail = false;
-  bool _savingPassword = false;
   bool _signingOut = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final user = _auth.currentUser;
-    _nameController.text = user?.displayName ?? '';
-    _emailController.text = user?.email ?? '';
-  }
+  final bool _isPro = false;
+  final DateTime? _proUntil = null;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _emailPasswordController.dispose();
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -60,82 +41,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _saveName() async {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      _toast('Introduce un nombre.');
-      return;
-    }
-    setState(() => _savingName = true);
-    try {
-      await _auth.updateDisplayName(name);
-      _toast('Nombre actualizado.');
-    } catch (e) {
-      _toast('No se pudo actualizar el nombre: $e');
-    } finally {
-      if (mounted) setState(() => _savingName = false);
-    }
-  }
-
-  Future<void> _saveEmail() async {
-    final email = _emailController.text.trim();
-    final password = _emailPasswordController.text;
-    if (email.isEmpty || password.isEmpty) {
-      _toast('Introduce el nuevo correo y tu contraseña actual.');
-      return;
-    }
-    setState(() => _savingEmail = true);
-    try {
-      await _auth.updateEmail(currentPassword: password, newEmail: email);
-      _toast('Correo actualizado.');
-    } catch (e) {
-      _toast('No se pudo actualizar el correo: $e');
-    } finally {
-      if (mounted) setState(() => _savingEmail = false);
-    }
-  }
-
-  Future<void> _savePassword() async {
-    final current = _currentPasswordController.text;
-    final next = _newPasswordController.text;
-    final confirm = _confirmPasswordController.text;
-
-    if (current.isEmpty || next.isEmpty || confirm.isEmpty) {
-      _toast('Rellena todos los campos de contraseña.');
-      return;
-    }
-    if (next != confirm) {
-      _toast('Las contraseñas no coinciden.');
-      return;
-    }
-    if (next.length < 8) {
-      _toast('La nueva contraseña debe tener al menos 8 caracteres.');
-      return;
-    }
-
-    setState(() => _savingPassword = true);
-    try {
-      await _auth.updatePassword(currentPassword: current, newPassword: next);
-      _toast('Contraseña actualizada.');
-      _currentPasswordController.clear();
-      _newPasswordController.clear();
-      _confirmPasswordController.clear();
-    } catch (e) {
-      _toast('No se pudo actualizar la contraseña: $e');
-    } finally {
-      if (mounted) setState(() => _savingPassword = false);
-    }
-  }
-
-  void _toast(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final email = _auth.currentUser?.email ?? 'Sin email';
+    final user = _auth.currentUser;
+    final email = user?.email ?? 'Sin email';
+    final name = user?.displayName?.trim().isNotEmpty == true
+        ? user!.displayName!.trim()
+        : 'Sin nombre';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -181,32 +94,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _sectionTitle(theme, 'Perfil'),
-              _ProfileCard(
-                theme: theme,
-                nameController: _nameController,
-                emailController: _emailController,
-                emailPasswordController: _emailPasswordController,
-                onSaveName: _savingName ? null : _saveName,
-                onSaveEmail: _savingEmail ? null : _saveEmail,
-                savingName: _savingName,
-                savingEmail: _savingEmail,
+              _sectionTitle(theme, 'Perfil de usuario'),
+              _SettingsGroup(
+                children: [
+                  _SettingsItem(
+                    icon: Icons.person_outline,
+                    title: name,
+                    subtitle: 'Nombre',
+                    showChevron: true,
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const UserProfileEditScreen(),
+                        ),
+                      );
+                      if (!mounted) return;
+                      setState(() {});
+                    },
+                  ),
+              _SettingsItem(
+                    icon: Icons.email_outlined,
+                    title: email,
+                    subtitle: 'Correo',
+                    showChevron: false,
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              _sectionTitle(theme, 'Cambiar contraseña'),
-              _PasswordCard(
-                theme: theme,
-                currentController: _currentPasswordController,
-                newController: _newPasswordController,
-                confirmController: _confirmPasswordController,
-                onSave: _savingPassword ? null : _savePassword,
-                saving: _savingPassword,
+              _sectionTitle(theme, 'Cuenta Pro'),
+              _SettingsGroup(
+                children: [
+                  _ProStatusItem(
+                    isPro: _isPro,
+                    proUntil: _proUntil,
+                    onUpgrade: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProSubscriptionsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               _sectionTitle(theme, 'Sesión'),
               _SessionCard(
                 theme: theme,
-                email: email,
                 onSignOut: _signingOut ? null : _signOut,
                 signingOut: _signingOut,
               ),
@@ -230,31 +164,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({
-    required this.theme,
-    required this.nameController,
-    required this.emailController,
-    required this.emailPasswordController,
-    required this.onSaveName,
-    required this.onSaveEmail,
-    required this.savingName,
-    required this.savingEmail,
-  });
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.children});
 
-  final ThemeData theme;
-  final TextEditingController nameController;
-  final TextEditingController emailController;
-  final TextEditingController emailPasswordController;
-  final VoidCallback? onSaveName;
-  final VoidCallback? onSaveEmail;
-  final bool savingName;
-  final bool savingEmail;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> content = [];
+    for (var i = 0; i < children.length; i++) {
+      content.add(children[i]);
+      if (i != children.length - 1) {
+        content.add(
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.border,
+          ),
+        );
+      }
+    }
+
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
@@ -267,211 +198,158 @@ class _ProfileCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Actualiza tu nombre y correo asociado a la cuenta.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _textFieldWithButton(
-            controller: nameController,
-            label: 'Nombre',
-            icon: Icons.person_outline,
-            buttonLabel: 'Guardar',
-            onPressed: onSaveName,
-            loading: savingName,
-          ),
-          const SizedBox(height: 10),
-          _textFieldWithButton(
-            controller: emailController,
-            label: 'Correo',
-            icon: Icons.email_outlined,
-            buttonLabel: 'Guardar',
-            onPressed: onSaveEmail,
-            loading: savingEmail,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Para cambiar el correo, introduce tu contraseña actual:',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: emailPasswordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Contraseña actual',
-              prefixIcon: Icon(Icons.lock_outline),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _textFieldWithButton({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required String buttonLabel,
-    required VoidCallback? onPressed,
-    required bool loading,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              labelText: label,
-              prefixIcon: Icon(icon),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: loading
-              ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.black,
-                  ),
-                )
-              : Text(buttonLabel),
-        ),
-      ],
+      child: Column(children: content),
     );
   }
 }
 
-class _PasswordCard extends StatelessWidget {
-  const _PasswordCard({
-    required this.theme,
-    required this.currentController,
-    required this.newController,
-    required this.confirmController,
-    required this.onSave,
-    required this.saving,
+class _SettingsItem extends StatelessWidget {
+  const _SettingsItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.showChevron,
+    this.onTap,
   });
 
-  final ThemeData theme;
-  final TextEditingController currentController;
-  final TextEditingController newController;
-  final TextEditingController confirmController;
-  final VoidCallback? onSave;
-  final bool saving;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool showChevron;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Elige una contraseña segura y no la reutilices.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: currentController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Contraseña actual',
-              prefixIcon: Icon(Icons.lock_outline),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: newController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Nueva contraseña',
-              prefixIcon: Icon(Icons.lock_outline),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: confirmController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Repite la nueva contraseña',
-              prefixIcon: Icon(Icons.lock_outline),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: onSave,
-            icon: saving
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.textMuted),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
                     ),
-                  )
-                : const Icon(Icons.save_alt),
-            label: const Text('Guardar contraseña'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Mínimo 8 caracteres, mezcla mayúsculas, minúsculas y números.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.textMuted,
+            if (showChevron)
+              Icon(
+                Icons.chevron_right,
+                color: AppColors.textMuted,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProStatusItem extends StatelessWidget {
+  const _ProStatusItem({
+    required this.isPro,
+    required this.proUntil,
+    required this.onUpgrade,
+  });
+
+  final bool isPro;
+  final DateTime? proUntil;
+  final VoidCallback onUpgrade;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final statusLabel = isPro ? 'PRO' : 'Free';
+    final subtitle = isPro ? _formatDate(proUntil) : 'No tienes PRO activo';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Icon(Icons.workspace_premium_outlined, color: AppColors.textMuted),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Estado de la cuenta',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  statusLabel,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
             ),
           ),
+          if (!isPro)
+            ElevatedButton(
+              onPressed: onUpgrade,
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Hazte PRO'),
+            ),
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Caduca pronto';
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return 'Hasta $day/$month/${date.year}';
   }
 }
 
 class _SessionCard extends StatelessWidget {
   const _SessionCard({
     required this.theme,
-    required this.email,
     required this.onSignOut,
     required this.signingOut,
   });
 
   final ThemeData theme;
-  final String email;
   final VoidCallback? onSignOut;
   final bool signingOut;
 
@@ -494,41 +372,9 @@ class _SessionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Cierra la sesión activa para volver a la pantalla de inicio.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.email_outlined, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    email,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: ElevatedButton.icon(
               onPressed: onSignOut,
               icon: signingOut
                   ? const SizedBox(
@@ -538,7 +384,9 @@ class _SessionCard extends StatelessWidget {
                     )
                   : const Icon(Icons.logout),
               label: const Text('Cerrar sesión'),
-              style: OutlinedButton.styleFrom(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

@@ -3,16 +3,36 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../data/stats/stats_repository.dart';
+import '../../../data/topics/topic_catalog.dart';
 import '../../../theme/app_colors.dart';
 import '../settings/settings_screen.dart';
 
-class StatsScreen extends StatelessWidget {
+class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
+
+  @override
+  State<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends State<StatsScreen> {
+  _TopicFilter _topicFilter = _TopicFilter.total;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final statsRepository = StatsRepository();
+    final topicLabelById = {
+      for (final block in topicBlocks)
+        for (final topic in block.topics) topic.topicId: topic.topicName,
+    };
+    final Map<String, int> topicOrderIndex = {};
+    var topicIndex = 0;
+    for (final block in topicBlocks) {
+      for (final topic in block.topics) {
+        topicOrderIndex[topic.topicId] = topicIndex;
+        topicIndex++;
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -55,103 +75,157 @@ class StatsScreen extends StatelessWidget {
       body: SafeArea(
         child: StreamBuilder<StatsSummary>(
           stream: statsRepository.summaryStream(),
-          builder: (context, snapshot) {
-            final stats = snapshot.data ?? StatsSummary.empty();
-            final isLoading =
-                snapshot.connectionState == ConnectionState.waiting &&
-                    !snapshot.hasData;
+          builder: (context, totalSnapshot) {
+            final totalStats = totalSnapshot.data ?? StatsSummary.empty();
+            final isTotalLoading =
+                totalSnapshot.connectionState == ConnectionState.waiting &&
+                    !totalSnapshot.hasData;
 
-            final totalCorrect = stats.totalCorrect;
-            final totalWrong = stats.totalWrong;
-            final totalAnswered = stats.totalAnswered;
+            return StreamBuilder<StatsSummary>(
+              stream: statsRepository.windowSummaryStream(),
+              builder: (context, monthSnapshot) {
+                final monthStats = monthSnapshot.data ?? StatsSummary.empty();
+                final isMonthLoading =
+                    monthSnapshot.connectionState == ConnectionState.waiting &&
+                        !monthSnapshot.hasData;
 
-            final monthCorrect = totalCorrect;
-            final monthWrong = totalWrong;
-            final monthAnswered = totalAnswered;
+                final topicStream = _topicFilter == _TopicFilter.total
+                    ? statsRepository.topicStatsStream()
+                    : statsRepository.topicStatsStream(
+                        window: const Duration(days: 30),
+                      );
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _SectionCard(
-                    title: 'Acertadas vs falladas',
-                    trailing: 'Total',
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 6),
-                        DonutChart(
-                          correct: totalCorrect,
-                          wrong: totalWrong,
-                          size: 180,
-                        ),
-                        const SizedBox(height: 12),
-                        _LegendRow(
-                          correctLabel: 'Acertadas',
-                          wrongLabel: 'Falladas',
-                        ),
-                        const SizedBox(height: 16),
-                        _CountRow(
-                          label: 'Preguntas contestadas (total)',
-                          total: totalAnswered,
-                          correct: totalCorrect,
-                          wrong: totalWrong,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionCard(
-                    title: 'Acertadas vs falladas',
-                    trailing: 'Ultimo mes',
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 6),
-                        DonutChart(
-                          correct: monthCorrect,
-                          wrong: monthWrong,
-                          size: 180,
-                        ),
-                        const SizedBox(height: 12),
-                        _LegendRow(
-                          correctLabel: 'Acertadas',
-                          wrongLabel: 'Falladas',
-                        ),
-                        const SizedBox(height: 16),
-                        _CountRow(
-                          label: 'Preguntas contestadas (ultimo mes)',
-                          total: monthAnswered,
-                          correct: monthCorrect,
-                          wrong: monthWrong,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionCard(
-                    title: 'Estadisticas por tema',
-                    trailing: 'Acertadas/falladas',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _TopicStats.samples()
-                          .map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _TopicStatCard(
-                                theme: theme,
-                                item: item,
-                              ),
+                return StreamBuilder<List<TopicStatSummary>>(
+                  stream: topicStream,
+                  builder: (context, topicSnapshot) {
+                    final topicStats = topicSnapshot.data ?? const [];
+                    final isTopicLoading =
+                        topicSnapshot.connectionState ==
+                                ConnectionState.waiting &&
+                            !topicSnapshot.hasData;
+
+                    final totalCorrect = totalStats.totalCorrect;
+                    final totalWrong = totalStats.totalWrong;
+                    final totalAnswered = totalStats.totalAnswered;
+
+                    final monthCorrect = monthStats.totalCorrect;
+                    final monthWrong = monthStats.totalWrong;
+                    final monthAnswered = monthStats.totalAnswered;
+
+                    final topicsUi = _TopicStats.fromSummaries(
+                      topicStats,
+                      labels: topicLabelById,
+                      orderIndex: topicOrderIndex,
+                    );
+
+                    final isLoading =
+                        isTotalLoading || isMonthLoading || isTopicLoading;
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _SectionCard(
+                            title: 'Acertadas vs falladas',
+                            trailing: 'Total',
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 6),
+                                DonutChart(
+                                  correct: totalCorrect,
+                                  wrong: totalWrong,
+                                  size: 180,
+                                ),
+                                const SizedBox(height: 12),
+                                _LegendRow(
+                                  correctLabel: 'Acertadas',
+                                  wrongLabel: 'Falladas',
+                                ),
+                                const SizedBox(height: 16),
+                                _CountRow(
+                                  label: 'Preguntas contestadas (total)',
+                                  total: totalAnswered,
+                                  correct: totalCorrect,
+                                  wrong: totalWrong,
+                                ),
+                              ],
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  if (isLoading) ...[
-                    const SizedBox(height: 12),
-                    const LinearProgressIndicator(minHeight: 6),
-                  ],
-                ],
-              ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SectionCard(
+                            title: 'Acertadas vs falladas',
+                            trailing: 'Ultimos 30 dias',
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 6),
+                                DonutChart(
+                                  correct: monthCorrect,
+                                  wrong: monthWrong,
+                                  size: 180,
+                                ),
+                                const SizedBox(height: 12),
+                                _LegendRow(
+                                  correctLabel: 'Acertadas',
+                                  wrongLabel: 'Falladas',
+                                ),
+                                const SizedBox(height: 16),
+                                _CountRow(
+                                  label:
+                                      'Preguntas contestadas (ultimos 30 dias)',
+                                  total: monthAnswered,
+                                  correct: monthCorrect,
+                                  wrong: monthWrong,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SectionCard(
+                            title: 'Estadisticas por tema',
+                            trailing: 'Acertadas/falladas',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _TopicFilterTabs(
+                                  value: _topicFilter,
+                                  onChanged: (value) {
+                                    if (value == _topicFilter) return;
+                                    setState(() => _topicFilter = value);
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+                                if (topicsUi.isEmpty)
+                                  Text(
+                                    'Aun no hay datos por tema.',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.textMuted,
+                                    ),
+                                  )
+                                else
+                                  ...topicsUi.map(
+                                    (item) => Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: _TopicStatCard(
+                                        theme: theme,
+                                        item: item,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (isLoading) ...[
+                            const SizedBox(height: 12),
+                            const LinearProgressIndicator(minHeight: 6),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             );
           },
         ),
@@ -213,6 +287,88 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: 12),
           child,
         ],
+      ),
+    );
+  }
+}
+
+enum _TopicFilter { total, last30 }
+
+class _TopicFilterTabs extends StatelessWidget {
+  const _TopicFilterTabs({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final _TopicFilter value;
+  final ValueChanged<_TopicFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isTotal = value == _TopicFilter.total;
+    final isLast30 = value == _TopicFilter.last30;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _FilterButton(
+            label: 'Total',
+            isSelected: isTotal,
+            onTap: () => onChanged(_TopicFilter.total),
+            theme: theme,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _FilterButton(
+            label: 'Ultimos 30 dias',
+            isSelected: isLast30,
+            onTap: () => onChanged(_TopicFilter.last30),
+            theme: theme,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.theme,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.18) : null,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isSelected ? AppColors.textPrimary : AppColors.textMuted,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -508,11 +664,13 @@ class _MiniStatCard extends StatelessWidget {
 
 class _TopicStats {
   const _TopicStats({
+    required this.topicId,
     required this.title,
     required this.correct,
     required this.wrong,
   });
 
+  final String topicId;
   final String title;
   final int correct;
   final int wrong;
@@ -520,13 +678,30 @@ class _TopicStats {
   int get total => correct + wrong;
   int get percent => total == 0 ? 0 : ((correct / total) * 100).round();
 
-  static List<_TopicStats> samples() => const [
-        _TopicStats(title: 'Legislacion', correct: 34, wrong: 10),
-        _TopicStats(title: 'Intervencion y rescate', correct: 28, wrong: 14),
-        _TopicStats(title: 'Primeros auxilios', correct: 22, wrong: 6),
-        _TopicStats(title: 'Equipos y materiales', correct: 18, wrong: 12),
-        _TopicStats(title: 'Comunicaciones', correct: 26, wrong: 10),
-      ];
+  static List<_TopicStats> fromSummaries(
+    List<TopicStatSummary> summaries, {
+    required Map<String, String> labels,
+    required Map<String, int> orderIndex,
+  }) {
+    final items = summaries
+        .map(
+          (item) => _TopicStats(
+            topicId: item.topicId,
+            title: labels[item.topicId] ?? item.topicId,
+            correct: item.correct,
+            wrong: item.wrong,
+          ),
+        )
+        .toList();
+
+    items.sort((a, b) {
+      final indexA = orderIndex[a.topicId] ?? 9999;
+      final indexB = orderIndex[b.topicId] ?? 9999;
+      return indexA.compareTo(indexB);
+    });
+
+    return items;
+  }
 }
 
 class _TopicStatCard extends StatelessWidget {
