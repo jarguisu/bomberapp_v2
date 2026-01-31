@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../data/auth/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import 'pro_subscriptions_screen.dart';
+import 'notifications_screen.dart';
 import 'user_profile_edit_screen.dart';
+import 'about_app_screen.dart';
 import '../stats/stats_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -121,6 +123,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              _sectionTitle(theme, 'Preferencias'),
+              _SettingsGroup(
+                children: [
+                  _SettingsItem(
+                    icon: Icons.notifications_none_outlined,
+                    title: 'Notificaciones',
+                    subtitle: 'Gestiona tus avisos',
+                    showChevron: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               _sectionTitle(theme, 'Cuenta Pro'),
               _SettingsGroup(
                 children: [
@@ -134,6 +155,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       );
                     },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _sectionTitle(theme, 'Sobre BomberAPP'),
+              _SettingsGroup(
+                children: [
+                  _SettingsItem(
+                    icon: Icons.info_outline,
+                    title: 'Información sobre la app',
+                    subtitle: 'Conoce el origen del proyecto',
+                    showChevron: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AboutAppScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SettingsItem(
+                    icon: Icons.menu_book_outlined,
+                    title: 'Guía rápida',
+                    subtitle: 'Próximamente',
+                    showChevron: false,
                   ),
                 ],
               ),
