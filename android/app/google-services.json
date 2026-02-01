@@ -12,7 +12,20 @@
           "package_name": "com.example.bomber_app2"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "759518440446-qkt84m74ha2qi1dj5s2ab41hfkhunldo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bomber_app2",
+            "certificate_hash": "c721dad05b03514961b14e0c145d3861b562420d"
+          }
+        },
+        {
+          "client_id": "759518440446-qmrkvqsblnis47mhj3cc24gaidt44oth.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBKbNgIncrQ-yn52ZPONWIwwJ7nKhdGcaA"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "759518440446-qmrkvqsblnis47mhj3cc24gaidt44oth.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
