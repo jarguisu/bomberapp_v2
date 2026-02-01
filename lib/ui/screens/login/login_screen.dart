@@ -50,6 +50,26 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _auth.signInWithGoogle();
+      // AuthGate detecta el usuario y te lleva a Home.
+    } on StateError catch (e) {
+      if (e.message == 'login-cancelled') {
+        return;
+      }
+      _showError('No se pudo iniciar sesion con Google.');
+    } on FirebaseAuthException catch (e) {
+      _showError(_friendlyAuthError(e));
+    } catch (_) {
+      _showError('Ha ocurrido un error inesperado. Intentalo de nuevo.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
@@ -97,6 +117,12 @@ class _LoginScreenState extends State<LoginScreen> {
         return 'Contraseña incorrecta.';
       case 'invalid-credential':
         return 'Credenciales incorrectas.';
+      case 'account-exists-with-different-credential':
+        return 'Ese correo ya esta asociado a otro proveedor.';
+      case 'popup-blocked':
+        return 'El navegador bloqueo la ventana emergente.';
+      case 'popup-closed-by-user':
+        return 'Cerraste la ventana antes de completar el login.';
       case 'too-many-requests':
         return 'Demasiados intentos. Espera un poco y prueba de nuevo.';
       case 'network-request-failed':
@@ -276,7 +302,55 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Divider(
+                                  color: AppColors.border,
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Text('o'),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  color: AppColors.border,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _isLoading ? null : _signInWithGoogle,
+                              icon: Image.asset(
+                                'assets/images/google-logo.png',
+                                width: 22,
+                                height: 22,
+                              ),
+                              label: Text(
+                                'Continuar con Google',
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
 
                           Row(
                             children: [

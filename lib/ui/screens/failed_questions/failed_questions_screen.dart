@@ -1,10 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../../data/auth/auth_service.dart';
 import '../../../data/failed_questions/failed_questions_repository.dart';
 import '../../../data/questions/question_model.dart';
 import '../../../data/questions/question_repository.dart';
+import '../../../data/stats/stats_repository.dart';
 import '../../../theme/app_colors.dart';
 import '../../widgets/app_footer.dart';
+import '../settings/pro_subscriptions_screen.dart';
 import '../test_runner/test_runner_screen.dart';
 
 class FailedQuestionsScreen extends StatefulWidget {
@@ -15,10 +18,100 @@ class FailedQuestionsScreen extends StatefulWidget {
 }
 
 class _FailedQuestionsScreenState extends State<FailedQuestionsScreen> {
+  final _auth = AuthService();
   final _failedRepo = FailedQuestionsRepository();
   final _questionRepo = SqliteQuestionRepository();
+  final _statsRepository = StatsRepository();
 
-  void _startFailedTest(List<Question> questions) {
+  bool _isPro = false;
+  bool _isCheckingPro = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProStatus();
+  }
+
+  Future<void> _loadProStatus() async {
+    try {
+      final isPro = await _auth.isProUser();
+      if (!mounted) return;
+      setState(() {
+        _isPro = isPro;
+        _isCheckingPro = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPro = false;
+        _isCheckingPro = false;
+      });
+    }
+  }
+
+  Future<void> _showProLimitDialog() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Limite diario del plan Free'),
+          content: const Text(
+            'Has alcanzado las 20 preguntas de hoy. '
+            'Hazte PRO y practica sin limites: tests ilimitados, simulacros y mas.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Mas tarde'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ProSubscriptionsScreen(),
+                  ),
+                );
+              },
+              child: const Text('Hazte PRO'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool> _confirmRemainingDialog(int remaining) async {
+    if (!mounted) return false;
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Limite diario del plan Free'),
+              content: Text(
+                'Hoy solo te quedan $remaining preguntas disponibles. '
+                'El test se ajustara automaticamente a ese numero.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Continuar'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    return confirmed;
+  }
+
+  Future<void> _startFailedTest(List<Question> questions) async {
     if (questions.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -28,10 +121,43 @@ class _FailedQuestionsScreenState extends State<FailedQuestionsScreen> {
       return;
     }
 
+    if (_isCheckingPro) {
+      await _loadProStatus();
+    }
+
+    var finalQuestions = questions;
+
+    if (!_isPro) {
+      try {
+        final answeredToday = await _statsRepository.fetchAnsweredToday();
+        final remaining = 20 - answeredToday;
+
+        if (remaining <= 0) {
+          await _showProLimitDialog();
+          return;
+        }
+
+        if (remaining < questions.length) {
+          final confirmed = await _confirmRemainingDialog(remaining);
+          if (!confirmed) return;
+          finalQuestions = questions.take(remaining).toList();
+        }
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('No se pudo comprobar el limite diario. Intentalo de nuevo.'),
+          ),
+        );
+        return;
+      }
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) =>
-            TestRunnerScreen.forFailedQuestions(questions: questions),
+            TestRunnerScreen.forFailedQuestions(questions: finalQuestions),
       ),
     );
   }

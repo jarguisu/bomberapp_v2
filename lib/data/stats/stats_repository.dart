@@ -94,13 +94,7 @@ class StatsRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
 
-  User _requireUser() {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw StateError('No hay usuario autenticado.');
-    }
-    return user;
-  }
+  User? _currentUser() => _auth.currentUser;
 
   DocumentReference<Map<String, dynamic>> _summaryRefFor(User user) {
     return _db.collection('users').doc(user.uid).collection('stats').doc('summary');
@@ -111,15 +105,37 @@ class StatsRepository {
   }
 
   Future<StatsSummary> fetchSummary() async {
-    final user = _requireUser();
+    final user = _currentUser();
+    if (user == null) return StatsSummary.empty();
     final snap = await _summaryRefFor(user).get();
     final data = snap.data();
     if (data == null) return StatsSummary.empty();
     return StatsSummary.fromMap(data);
   }
 
+  Future<int> fetchAnsweredToday() async {
+    final user = _currentUser();
+    if (user == null) return 0;
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final since = Timestamp.fromDate(startOfDay);
+
+    final snap = await _attemptsRefFor(user)
+        .where('createdAt', isGreaterThanOrEqualTo: since)
+        .get();
+
+    var answered = 0;
+    for (final doc in snap.docs) {
+      answered += _asInt(doc.data()['answered']);
+    }
+    return answered;
+  }
+
   Stream<StatsSummary> summaryStream() {
-    final user = _requireUser();
+    final user = _currentUser();
+    if (user == null) {
+      return Stream.value(StatsSummary.empty());
+    }
     return _summaryRefFor(user).snapshots().map((snap) {
       final data = snap.data();
       if (data == null) return StatsSummary.empty();
@@ -130,7 +146,10 @@ class StatsRepository {
   Stream<StatsSummary> windowSummaryStream({
     Duration window = const Duration(days: 30),
   }) {
-    final user = _requireUser();
+    final user = _currentUser();
+    if (user == null) {
+      return Stream.value(StatsSummary.empty());
+    }
     final since = Timestamp.fromDate(DateTime.now().subtract(window));
 
     return _attemptsRefFor(user)
@@ -142,7 +161,10 @@ class StatsRepository {
   Stream<List<TopicStatSummary>> topicStatsStream({
     Duration? window,
   }) {
-    final user = _requireUser();
+    final user = _currentUser();
+    if (user == null) {
+      return Stream.value(const []);
+    }
     Query<Map<String, dynamic>> query = _attemptsRefFor(user);
 
     if (window != null) {
@@ -197,7 +219,10 @@ class StatsRepository {
     required double score,
     required Map<String, TopicStatSummary> byTopic,
   }) async {
-    final user = _requireUser();
+    final user = _currentUser();
+    if (user == null) {
+      throw StateError('No hay usuario autenticado.');
+    }
     final ref = _summaryRefFor(user);
     final attemptsRef = _attemptsRefFor(user);
     final attemptDoc = attemptsRef.doc();

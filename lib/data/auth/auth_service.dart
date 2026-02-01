@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../stats/stats_repository.dart';
 
@@ -54,7 +56,52 @@ class AuthService {
     return cred;
   }
 
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    await _auth.signOut();
+    if (!kIsWeb) {
+      await GoogleSignIn().signOut();
+    }
+  }
+
+  Future<UserCredential> signInWithGoogle() async {
+    if (kIsWeb) {
+      final provider = GoogleAuthProvider()
+        ..setCustomParameters({'prompt': 'select_account'});
+
+      final cred = await _auth.signInWithPopup(provider);
+      final user = cred.user;
+      if (user != null) {
+        await _createUserDocIfNeeded(
+          uid: user.uid,
+          email: user.email ?? '',
+          name: user.displayName ?? '',
+        );
+      }
+      return cred;
+    }
+
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
+      throw StateError('login-cancelled');
+    }
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final cred = await _auth.signInWithCredential(credential);
+    final user = cred.user;
+    if (user != null) {
+      await _createUserDocIfNeeded(
+        uid: user.uid,
+        email: user.email ?? '',
+        name: user.displayName ?? '',
+      );
+    }
+    return cred;
+  }
 
   Future<void> sendPasswordResetEmail(String email) {
     return _auth.sendPasswordResetEmail(email: email.trim());
@@ -112,6 +159,19 @@ class AuthService {
 
     await user.reauthenticateWithCredential(credential);
     await user.updatePassword(newPassword);
+  }
+
+  Future<bool> isProUser() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    final snap = await _db.collection('users').doc(user.uid).get();
+    final data = snap.data();
+    if (data == null) return false;
+
+    final plan = (data['plan'] ?? 'free').toString().toLowerCase();
+    if (plan == 'free') return false;
+    return true;
   }
 
   Future<void> _createUserDocIfNeeded({

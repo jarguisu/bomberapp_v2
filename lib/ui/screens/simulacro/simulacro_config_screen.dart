@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/auth/auth_service.dart';
 import '../../../data/questions/question_repository.dart';
 import '../../../data/topics/topic_catalog.dart';
 import '../../../logic/test_engine/test_engine.dart';
 import '../../../theme/app_colors.dart';
 import '../test_runner/test_runner_screen.dart';
+import '../settings/pro_subscriptions_screen.dart';
 import '../../widgets/app_footer.dart';
 
 class SimulacroConfigScreen extends StatefulWidget {
@@ -15,8 +17,11 @@ class SimulacroConfigScreen extends StatefulWidget {
 }
 
 class _SimulacroConfigScreenState extends State<SimulacroConfigScreen> {
+  final _auth = AuthService();
   TopicRef? _selectedServiceTopic;
   bool _withTimer = true;
+  bool _isPro = false;
+  bool _isCheckingPro = true;
 
   List<TopicRef> get _serviceTopics => topicBlocks
       .where((b) => b.id == 'S')
@@ -32,7 +37,70 @@ class _SimulacroConfigScreenState extends State<SimulacroConfigScreen> {
   int get _totalQuestions => _selectedServiceTopic == null ? 80 : 100;
   int get _generalQuestions => _totalQuestions - _serviceQuestions;
 
-  void _startSimulacro() {
+  @override
+  void initState() {
+    super.initState();
+    _loadProStatus();
+  }
+
+  Future<void> _loadProStatus() async {
+    try {
+      final isPro = await _auth.isProUser();
+      if (!mounted) return;
+      setState(() {
+        _isPro = isPro;
+        _isCheckingPro = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPro = false;
+        _isCheckingPro = false;
+      });
+    }
+  }
+
+  Future<void> _showProDialog() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Funcion para Usuarios Pro'),
+          content: const Text(
+            'Para iniciar el simulacro oficial necesitas el plan Pro.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ProSubscriptionsScreen(),
+                  ),
+                );
+              },
+              child: const Text('Hazte PRO'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _startSimulacro() async {
+    if (_isCheckingPro) {
+      await _loadProStatus();
+    }
+    if (!_isPro) {
+      await _showProDialog();
+      return;
+    }
+
     final filters = <QuestionTopicFilter>[
       ..._nonServiceTopics.map(
         (t) => QuestionTopicFilter(topicId: t.topicId),

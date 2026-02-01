@@ -19,12 +19,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _auth = AuthService();
 
   bool _signingOut = false;
-  final bool _isPro = false;
-  final DateTime? _proUntil = null;
+  bool _isPro = false;
+  bool _isCheckingPro = true;
+  DateTime? _proUntil;
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProStatus();
+  }
+
+  Future<void> _loadProStatus() async {
+    try {
+      final isPro = await _auth.isProUser();
+      if (!mounted) return;
+      setState(() {
+        _isPro = isPro;
+        _isCheckingPro = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPro = false;
+        _isCheckingPro = false;
+      });
+    }
   }
 
   Future<void> _signOut() async {
@@ -147,13 +171,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   _ProStatusItem(
                     isPro: _isPro,
+                    isChecking: _isCheckingPro,
                     proUntil: _proUntil,
                     onUpgrade: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const ProSubscriptionsScreen(),
                         ),
-                      );
+                      ).then((_) => _loadProStatus());
                     },
                   ),
                 ],
@@ -314,11 +339,13 @@ class _SettingsItem extends StatelessWidget {
 class _ProStatusItem extends StatelessWidget {
   const _ProStatusItem({
     required this.isPro,
+    required this.isChecking,
     required this.proUntil,
     required this.onUpgrade,
   });
 
   final bool isPro;
+  final bool isChecking;
   final DateTime? proUntil;
   final VoidCallback onUpgrade;
 
@@ -326,7 +353,9 @@ class _ProStatusItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final statusLabel = isPro ? 'PRO' : 'Free';
-    final subtitle = isPro ? _formatDate(proUntil) : 'No tienes PRO activo';
+    final subtitle = isChecking
+        ? 'Comprobando estado...'
+        : (isPro ? _formatDate(proUntil) : 'No tienes PRO activo');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -365,7 +394,7 @@ class _ProStatusItem extends StatelessWidget {
           ),
           if (!isPro)
             ElevatedButton(
-              onPressed: onUpgrade,
+              onPressed: isChecking ? null : onUpgrade,
               style: ElevatedButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

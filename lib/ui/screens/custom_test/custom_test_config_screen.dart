@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/auth/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../logic/test_engine/test_engine.dart';
 import '../../../data/questions/question_repository.dart';
 import '../../../data/topics/topic_catalog.dart';
 import '../test_runner/test_runner_screen.dart';
+import '../settings/pro_subscriptions_screen.dart';
 import '../../widgets/app_footer.dart';
 
 class CustomTestConfigScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class CustomTestConfigScreen extends StatefulWidget {
 }
 
 class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
+  final _auth = AuthService();
   late final List<_CustomBlock> _blocks;
 
   // Estado
@@ -23,6 +26,8 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
   String _searchText = '';
   double _numQuestions = 20;
   bool _withTimer = false;
+  bool _isPro = false;
+  bool _isCheckingPro = true;
 
   int get _selectedTopicsCount => _selectedTopicIds.length;
 
@@ -101,6 +106,56 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
           ),
         )
         .toList();
+    _loadProStatus();
+  }
+
+  Future<void> _loadProStatus() async {
+    try {
+      final isPro = await _auth.isProUser();
+      if (!mounted) return;
+      setState(() {
+        _isPro = isPro;
+        _isCheckingPro = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPro = false;
+        _isCheckingPro = false;
+      });
+    }
+  }
+
+  Future<void> _showProDialog() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Funcion para Usuarios Pro'),
+          content: const Text(
+            'Para hacer test personalizado necesitas el plan Pro.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ProSubscriptionsScreen(),
+                  ),
+                );
+              },
+              child: const Text('Hazte PRO'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _onSearchChanged(String value) {
@@ -109,7 +164,15 @@ class _CustomTestConfigScreenState extends State<CustomTestConfigScreen> {
     });
   }
 
-  void _onSubmit() {
+  Future<void> _onSubmit() async {
+    if (_isCheckingPro) {
+      await _loadProStatus();
+    }
+    if (!_isPro) {
+      await _showProDialog();
+      return;
+    }
+
     if (_selectedTopicIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona al menos un tema.')),

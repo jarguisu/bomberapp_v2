@@ -1,10 +1,13 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../../data/auth/auth_service.dart';
 import '../../../data/stats/stats_repository.dart';
 import '../../../data/topics/topic_catalog.dart';
 import '../../../theme/app_colors.dart';
+import '../settings/pro_subscriptions_screen.dart';
 import '../settings/settings_screen.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -15,7 +18,65 @@ class StatsScreen extends StatefulWidget {
 }
 
 class _StatsScreenState extends State<StatsScreen> {
+  final _auth = AuthService();
   _TopicFilter _topicFilter = _TopicFilter.total;
+  bool _isPro = false;
+  bool _isCheckingPro = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProStatus();
+  }
+
+  Future<void> _loadProStatus() async {
+    try {
+      final isPro = await _auth.isProUser();
+      if (!mounted) return;
+      setState(() {
+        _isPro = isPro;
+        _isCheckingPro = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPro = false;
+        _isCheckingPro = false;
+      });
+    }
+  }
+
+  Future<void> _showProStatsDialog() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Estadisticas completas'),
+          content: const Text(
+            'Para ver todas las estadisticas al completo, hazte usuario PRO.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Mas tarde'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ProSubscriptionsScreen(),
+                  ),
+                );
+              },
+              child: const Text('Hazte PRO'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +84,8 @@ class _StatsScreenState extends State<StatsScreen> {
     final statsRepository = StatsRepository();
     final topicLabelById = {
       for (final block in topicBlocks)
-        for (final topic in block.topics) topic.topicId: topic.topicName,
+        for (final topic in block.topics)
+          topic.topicId: '${topic.topicCode} · ${topic.topicName}',
     };
     final Map<String, int> topicOrderIndex = {};
     var topicIndex = 0;
@@ -127,6 +189,55 @@ class _StatsScreenState extends State<StatsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _SectionCard(
+                            title: 'Actividad de hoy',
+                            trailing: 'Diario',
+                            child: FutureBuilder<int>(
+                              future: statsRepository.fetchAnsweredToday(),
+                              builder: (context, todaySnapshot) {
+                                final isTodayLoading =
+                                    todaySnapshot.connectionState ==
+                                            ConnectionState.waiting &&
+                                        !todaySnapshot.hasData;
+                                final answeredToday =
+                                    todaySnapshot.data ?? 0;
+
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      'Preguntas contestadas hoy',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      answeredToday.toString(),
+                                      style: theme.textTheme.headlineMedium
+                                          ?.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Se reinicia a las 00:00.',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                    if (isTodayLoading) ...[
+                                      const SizedBox(height: 10),
+                                      const LinearProgressIndicator(minHeight: 4),
+                                    ],
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SectionCard(
                             title: 'Acertadas vs falladas',
                             trailing: 'Total',
                             child: Column(
@@ -202,17 +313,46 @@ class _StatsScreenState extends State<StatsScreen> {
                                       color: AppColors.textMuted,
                                     ),
                                   )
-                                else
-                                  ...topicsUi.map(
-                                    (item) => Padding(
+                                else ...[
+                                  ...topicsUi.asMap().entries.map((entry) {
+                                    final index = entry.key;
+                                    final item = entry.value;
+                                    final isLocked =
+                                        !_isPro && !_isCheckingPro && index >= 2;
+                                    final card = _TopicStatCard(
+                                      theme: theme,
+                                      item: item,
+                                    );
+
+                                    return Padding(
                                       padding:
                                           const EdgeInsets.only(bottom: 12),
-                                      child: _TopicStatCard(
-                                        theme: theme,
-                                        item: item,
+                                      child: isLocked
+                                          ? _BlurCard(child: card)
+                                          : card,
+                                    );
+                                  }),
+                                  if (!_isPro && !_isCheckingPro)
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.symmetric(vertical: 4),
+                                      child: ElevatedButton(
+                                        onPressed: _showProStatsDialog,
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Ver todas las estadisticas',
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -291,7 +431,6 @@ class _SectionCard extends StatelessWidget {
     );
   }
 }
-
 enum _TopicFilter { total, last30 }
 
 class _TopicFilterTabs extends StatelessWidget {
@@ -620,7 +759,7 @@ class _MiniStatCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '$percent%',
+                '%',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -639,8 +778,7 @@ class _MiniStatCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(999),
@@ -728,38 +866,44 @@ class _TopicStatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${item.total} preguntas · ${item.percent}% acierto',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
+              Text(
+                item.title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                softWrap: true,
               ),
+              const SizedBox(height: 6),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _Pill(
-                    label: '${item.correct} OK',
-                    color: AppColors.success,
+                  Expanded(
+                    child: Text(
+                      '${item.total} preguntas · ${item.percent}% acierto',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  _Pill(
-                    label: '${item.wrong} KO',
-                    color: AppColors.error,
+                  Row(
+                    children: [
+                      _Pill(
+                        label: '${item.correct} OK',
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 8),
+                      _Pill(
+                        label: '${item.wrong} KO',
+                        color: AppColors.error,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -804,7 +948,6 @@ class _TopicStatCard extends StatelessWidget {
     );
   }
 }
-
 class _Pill extends StatelessWidget {
   const _Pill({required this.label, required this.color});
 
@@ -864,3 +1007,34 @@ class _DotLabel extends StatelessWidget {
     );
   }
 }
+
+class _BlurCard extends StatelessWidget {
+  const _BlurCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        children: [
+          child,
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+              child: Container(
+                color: Colors.white.withValues(alpha: 0.05),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
+
