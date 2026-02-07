@@ -1,16 +1,16 @@
 class Question {
-  final String id; // ID único de la pregunta
-  final String topicId; // Relación con el tema en el catálogo
+  final String id; // ID unico de la pregunta
+  final String topicId; // Relacion con el tema en el catalogo
   final String text; // Enunciado de la pregunta
   final String correct; // Respuesta correcta
   final String wrong1; // Respuesta incorrecta 1
   final String wrong2; // Respuesta incorrecta 2
   final String wrong3; // Respuesta incorrecta 3
-  final String? explanation; // Explicación opcional
-  final String? reference; // Referencia legal/artículo opcional
-  final int? difficulty; // 1 = fácil, 2 = media, 3 = difícil
-  final String? source; // Origen (Oficial, Elaboración propia...)
-  final int? year; // Año del examen si aplica
+  final String? explanation; // Explicacion opcional
+  final String? reference; // Referencia legal/articulo opcional
+  final int? difficulty; // 1 = facil, 2 = media, 3 = dificil
+  final String? source; // Origen (Oficial, Elaboracion propia...)
+  final int? year; // Ano del examen si aplica
 
   const Question({
     required this.id,
@@ -27,38 +27,57 @@ class Question {
     this.year,
   });
 
+  static String _requiredString(dynamic value, {String fallback = ''}) {
+    if (value == null) return fallback;
+    final text = value.toString().trim();
+    return text.isEmpty ? fallback : text;
+  }
+
+  static String? _optionalString(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
+  static int? _optionalInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
   factory Question.fromMap(Map<String, dynamic> map) {
     return Question(
-      id: map['id'] as String,
-      topicId: map['topic_id'] as String,
-      text: map['text'] as String,
-      correct: map['correct'] as String,
-      wrong1: map['wrong1'] as String,
-      wrong2: map['wrong2'] as String,
-      wrong3: map['wrong3'] as String,
-      explanation: map['explanation'] as String?,
-      reference: map['reference'] as String?,
-      difficulty: map['difficulty'] as int?,
-      source: map['source'] as String?,
-      year: map['year'] as int?,
+      id: _requiredString(map['id']),
+      topicId: _requiredString(map['topic_id']),
+      text: _requiredString(map['text']),
+      correct: _requiredString(map['correct']),
+      wrong1: _requiredString(map['wrong1']),
+      wrong2: _requiredString(map['wrong2']),
+      wrong3: _requiredString(map['wrong3']),
+      explanation: _optionalString(map['explanation']),
+      reference: _optionalString(map['reference']),
+      difficulty: _optionalInt(map['difficulty']),
+      source: _optionalString(map['source']),
+      year: _optionalInt(map['year']),
     );
   }
 
   factory Question.fromJson(Map<String, dynamic> json) {
-    // Permitimos JSON con campos extra; sólo leemos los necesarios.
+    // Permitimos JSON con campos extra; solo leemos los necesarios.
     return Question(
-      id: json['id'] as String,
-      topicId: json['topic_id'] as String,
-      text: json['text'] as String,
-      correct: json['correct'] as String,
-      wrong1: json['wrong1'] as String,
-      wrong2: json['wrong2'] as String,
-      wrong3: json['wrong3'] as String,
-      explanation: json['explanation'] as String?,
-      reference: json['reference'] as String?,
-      difficulty: json['difficulty'] as int?,
-      source: json['source'] as String?,
-      year: json['year'] as int?,
+      id: _requiredString(json['id']),
+      topicId: _requiredString(json['topic_id']),
+      text: _requiredString(json['text']),
+      correct: _requiredString(json['correct']),
+      wrong1: _requiredString(json['wrong1']),
+      wrong2: _requiredString(json['wrong2']),
+      wrong3: _requiredString(json['wrong3']),
+      explanation: _optionalString(json['explanation']),
+      reference: _optionalString(json['reference']),
+      difficulty: _optionalInt(json['difficulty']),
+      source: _optionalString(json['source']),
+      year: _optionalInt(json['year']),
     );
   }
 
