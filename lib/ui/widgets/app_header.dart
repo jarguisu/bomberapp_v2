@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 
 class AppHeader extends StatelessWidget {
@@ -53,24 +54,7 @@ class AppHeader extends StatelessWidget {
               ),
             ],
           ),
-          // Acciones
-          Row(
-            children: [
-              OutlinedButton(
-                onPressed: () {
-                  // TODO: Navegar a estadísticas
-                },
-                child: const Text('Estadísticas'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: () {
-                  // TODO: Navegar a ajustes
-                },
-                child: const Text('Ajustes'),
-              ),
-            ],
-          ),
+          const SizedBox.shrink(),
         ],
       ),
     );

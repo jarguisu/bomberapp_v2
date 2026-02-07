@@ -6,32 +6,42 @@ import 'test_session.dart';
 
 /// Configuración de un test por tema
 class TopicTestConfig {
-  final String topicId;       // G1, G2, E1...
-  final String topicName;     // por si quieres mostrarlo en la cabecera
+  final String blockId; // G, E o S
+  final String topicCode; // G1, G2, E1...
+  final String topicId; // Ej: GEN_CV_G2
+  final String topicName; // por si quieres mostrarlo en la cabecera
+  final String entityId; // GEN, CONSVAL...
+  final String syllabusId; // GEN_CV, CONSVAL_2024...
   final int numQuestions;
-  final bool withTimer;       // cronómetro sí/no
+  final bool withTimer; // cronómetro sí/no
 
   const TopicTestConfig({
+    required this.blockId,
+    required this.topicCode,
     required this.topicId,
     required this.topicName,
+    required this.entityId,
+    required this.syllabusId,
     required this.numQuestions,
     required this.withTimer,
   });
+
+  QuestionTopicFilter toFilter() => QuestionTopicFilter(
+        topicId: topicId,
+      );
 }
 
 class CustomTestConfig {
-  final List<String> topicIds; // p.ej. ['G1', 'G2']
+  final List<QuestionTopicFilter> topics; // p.ej. filtros combinados
   final int numQuestions;
   final bool withTimer;
 
   const CustomTestConfig({
-    required this.topicIds,
+    required this.topics,
     required this.numQuestions,
     required this.withTimer,
   });
 }
-
-
 
 /// Motor principal de tests.
 /// Se encarga de pedir preguntas al repositorio y
@@ -48,7 +58,7 @@ class TestEngine {
     // 1) Pedimos preguntas al repositorio
     final List<Question> questions =
         await questionRepository.getQuestionsByTopic(
-      topicId: config.topicId,
+      filter: config.toFilter(),
       limit: config.numQuestions,
       randomOrder: true,
     );
@@ -56,14 +66,14 @@ class TestEngine {
     // 2) Comprobamos que haya preguntas suficientes (por si acaso)
     if (questions.isEmpty) {
       throw StateError(
-        'No se han encontrado preguntas para el tema ${config.topicId}.',
+        'No se han encontrado preguntas para el tema ${config.topicCode}.',
       );
     }
 
     if (kDebugMode) {
       debugPrint(
         '[TestEngine] Generado test por tema '
-        '${config.topicId} (${config.topicName}) con ${questions.length} preguntas.',
+        '${config.topicCode} (${config.topicName}) con ${questions.length} preguntas.',
       );
     }
 
@@ -71,10 +81,10 @@ class TestEngine {
     return TestSession(questions: questions);
   }
 
-    /// Crea una sesión de test combinando varios temas.
+  /// Crea una sesión de test combinando varios temas.
   Future<TestSession> startCustomTest(CustomTestConfig config) async {
     final questions = await questionRepository.getQuestionsByTopics(
-      topicIds: config.topicIds,
+      filters: config.topics,
       totalLimit: config.numQuestions,
       randomOrder: true,
     );
@@ -87,5 +97,4 @@ class TestEngine {
 
     return TestSession(questions: questions);
   }
-
 }
