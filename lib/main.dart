@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'theme/app_theme.dart';
 import 'data/seed/question_seed_loader.dart';
-import 'ui/screens/login/login_screen.dart';
 import 'ui/auth/auth_gate.dart';
 
 
@@ -31,6 +30,23 @@ Future<void> main() async {
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e5.json');
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e6.json');
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e7.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e8.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e9.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e10.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e11.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e12.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e13.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e14.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e15.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e16.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e17.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e18.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e19.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e20.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e21.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e22.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e23.json');
+  await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_e24.json');
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_s1.json');
 
   runApp(const BomberApp());

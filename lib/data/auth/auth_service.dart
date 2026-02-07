@@ -219,6 +219,10 @@ class AuthService {
         if (!data.containsKey('planUntil')) {
           updateData['planUntil'] = null;
         }
+        if (!data.containsKey('hasSeenTutorial')) {
+          // Usuarios ya existentes: no mostrar tutorial automáticamente.
+          updateData['hasSeenTutorial'] = true;
+        }
 
         tx.update(ref, updateData);
         return;
@@ -234,6 +238,7 @@ class AuthService {
         'planProduct': null,
         'planStatus': null,
         'planUntil': null,
+        'hasSeenTutorial': false,
         'syllabusId': 'GEN_CV',
       });
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/auth/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../widgets/welcome_tutorial_dialog.dart';
 import 'pro_subscriptions_screen.dart';
 import 'notifications_screen.dart';
 import 'user_profile_edit_screen.dart';
@@ -203,8 +204,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SettingsItem(
                     icon: Icons.menu_book_outlined,
                     title: 'Guía rápida',
-                    subtitle: 'Próximamente',
-                    showChevron: false,
+                    subtitle: 'Ver tutorial de la app',
+                    showChevron: true,
+                    onTap: () {
+                      showWelcomeTutorialDialog(context);
+                    },
                   ),
                 ],
               ),

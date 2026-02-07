@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../data/stats/stats_repository.dart';
 import '../../../theme/app_colors.dart';
@@ -8,6 +10,7 @@ import '../../widgets/kpi_panel.dart';
 import '../../widgets/stats_panel.dart';
 import '../../widgets/mode_card.dart';
 import '../../widgets/app_footer.dart';
+import '../../widgets/welcome_tutorial_dialog.dart';
 import '../topic_test/topic_test_config_screen.dart';
 import '../custom_test/custom_test_config_screen.dart';
 import '../simulacro/simulacro_config_screen.dart';
@@ -15,13 +18,48 @@ import '../failed_questions/failed_questions_screen.dart';
 import '../settings/settings_screen.dart';
 import '../stats/stats_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  void _showComingSoon(BuildContext context, String modeName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$modeName aun no esta implementado.')),
-    );
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _checkedTutorial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowTutorial();
+    });
+  }
+
+  Future<void> _maybeShowTutorial() async {
+    if (_checkedTutorial) return;
+    _checkedTutorial = true;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final ref = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    try {
+      final snap = await ref.get();
+      final data = snap.data() ?? <String, dynamic>{};
+      final hasSeenTutorial = data['hasSeenTutorial'] == true;
+
+      if (hasSeenTutorial || !mounted) return;
+
+      final shouldMarkSeen = await showWelcomeTutorialDialog(context);
+
+      if (shouldMarkSeen == true) {
+        await ref.update({'hasSeenTutorial': true});
+      }
+    } catch (_) {
+      // Si falla Firestore, no bloqueamos la Home.
+    }
   }
 
   @override
@@ -147,19 +185,19 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 12),
-              ModeCard(
-                title: 'Preguntas falladas',
-                description:
-                    'Revisa tus errores acumulados y vuelve a intentarlo para mejorar tu puntuacion.',
-                buttonLabel: 'Ver preguntas falladas',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const FailedQuestionsScreen(),
-                    ),
-                  );
-                },
-              ),
+                  ModeCard(
+                    title: 'Preguntas falladas',
+                    description:
+                        'Revisa tus errores acumulados y vuelve a intentarlo para mejorar tu puntuacion.',
+                    buttonLabel: 'Ver preguntas falladas',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const FailedQuestionsScreen(),
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 16),
                   const AppFooter(),
                 ],
