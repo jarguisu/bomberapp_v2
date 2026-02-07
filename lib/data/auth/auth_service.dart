@@ -170,8 +170,18 @@ class AuthService {
     if (data == null) return false;
 
     final plan = (data['plan'] ?? 'free').toString().toLowerCase();
-    if (plan == 'free') return false;
-    return true;
+    if (plan != 'pro') return false;
+
+    final untilRaw = data['planUntil'];
+    if (untilRaw == null) return true;
+
+    if (untilRaw is! Timestamp) return true;
+    final until = untilRaw.toDate();
+
+    final status = (data['planStatus'] ?? '').toString().toLowerCase();
+    if (status == 'expired') return false;
+
+    return until.isAfter(DateTime.now());
   }
 
   Future<void> _createUserDocIfNeeded({
@@ -184,12 +194,30 @@ class AuthService {
     await _db.runTransaction((tx) async {
       final snap = await tx.get(ref);
       if (snap.exists) {
-        // Opcional: actualiza lastLoginAt si quieres
+        final data = snap.data() ?? <String, dynamic>{};
         final Map<String, dynamic> updateData = {
           'lastLoginAt': FieldValue.serverTimestamp(),
         };
         if (name != null && name.isNotEmpty) {
           updateData['name'] = name;
+        }
+
+        final currentPlan = (data['plan'] ?? 'free').toString().toLowerCase();
+        if (data['plan'] != currentPlan) {
+          updateData['plan'] = currentPlan;
+        }
+
+        if (!data.containsKey('planSource')) {
+          updateData['planSource'] = null;
+        }
+        if (!data.containsKey('planProduct')) {
+          updateData['planProduct'] = null;
+        }
+        if (!data.containsKey('planStatus')) {
+          updateData['planStatus'] = null;
+        }
+        if (!data.containsKey('planUntil')) {
+          updateData['planUntil'] = null;
         }
 
         tx.update(ref, updateData);
@@ -202,6 +230,10 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
         'lastLoginAt': FieldValue.serverTimestamp(),
         'plan': 'free',
+        'planSource': null,
+        'planProduct': null,
+        'planStatus': null,
+        'planUntil': null,
         'syllabusId': 'GEN_CV',
       });
 
