@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/auth/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import '../home/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -44,7 +45,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (_) => false,
+      );
     } on FirebaseAuthException catch (e) {
       _showError(_friendlyAuthError(e));
     } catch (_) {
@@ -60,7 +64,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await _auth.signInWithGoogle();
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (_) => false,
+      );
     } on StateError catch (e) {
       if (e.message == 'login-cancelled') {
         return;

@@ -41,6 +41,35 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:759518440446:android:6ae1c5ba5cd9b1f0f12eaf",
+        "android_client_info": {
+          "package_name": "joala.bomberapp2026"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "759518440446-qmrkvqsblnis47mhj3cc24gaidt44oth.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKbNgIncrQ-yn52ZPONWIwwJ7nKhdGcaA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "759518440446-qmrkvqsblnis47mhj3cc24gaidt44oth.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
