@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/auth/auth_service.dart';
+import '../../../data/stats/stats_repository.dart';
 import '../../../theme/app_colors.dart';
 import '../../../data/topics/topic_catalog.dart';
 import '../../../logic/test_engine/test_engine.dart';
 import '../../widgets/app_footer.dart';
 import '../../widgets/bomber_dropdown.dart';
+import '../settings/pro_subscriptions_screen.dart';
 import '../test_runner/test_runner_screen.dart';
 
 class TopicTestConfigScreen extends StatefulWidget {
@@ -15,10 +18,15 @@ class TopicTestConfigScreen extends StatefulWidget {
 }
 
 class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
+  final _auth = AuthService();
+  final _statsRepository = StatsRepository();
+
   String? _selectedBlockId;
   String? _selectedTopicId;
   double _numQuestions = 20;
   bool _withTimer = false;
+  bool _isPro = false;
+  bool _isCheckingPro = true;
 
   TopicBlock? get _selectedBlock {
     if (_selectedBlockId == null) return null;
@@ -38,12 +46,102 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
     final block = _selectedBlock;
     if (block == null || _selectedTopicId == null) return null;
     return block.topics.firstWhere(
-      (t) => t.id == _selectedTopicId,
+      (t) => t.topicId == _selectedTopicId,
       orElse: () => block.topics.first,
     );
   }
 
-  void _onSubmit() {
+  @override
+  void initState() {
+    super.initState();
+    _loadProStatus();
+  }
+
+  Future<void> _loadProStatus() async {
+    try {
+      final isPro = await _auth.isProUser();
+      if (!mounted) return;
+      setState(() {
+        _isPro = isPro;
+        _isCheckingPro = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPro = false;
+        _isCheckingPro = false;
+      });
+    }
+  }
+
+  Future<void> _showDailyLimitDialog({
+    required int answeredToday,
+    required int remaining,
+  }) async {
+    if (!mounted) return;
+    final remainingText =
+        remaining <= 0 ? 'Ya has completado tu cupo de hoy.' : 'Te quedan $remaining preguntas hoy.';
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Limite diario del plan Free'),
+          content: Text(
+            'Hoy llevas $answeredToday de 20 preguntas. $remainingText\n\n'
+            'Pasa a PRO para disfrutar de tests ilimitados, simulacros y seguir avanzando sin limites.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Mas tarde'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ProSubscriptionsScreen(),
+                  ),
+                );
+              },
+              child: const Text('Hazte PRO'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool> _canStartFreeTest(int requestedQuestions) async {
+    if (_isCheckingPro) {
+      await _loadProStatus();
+    }
+    if (_isPro) return true;
+
+    try {
+      final answeredToday = await _statsRepository.fetchAnsweredToday();
+      final remaining = 20 - answeredToday;
+      if (remaining <= 0 || requestedQuestions > remaining) {
+        await _showDailyLimitDialog(
+          answeredToday: answeredToday,
+          remaining: remaining,
+        );
+        return false;
+      }
+      return true;
+    } catch (_) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo comprobar el limite diario. Intentalo de nuevo.'),
+        ),
+      );
+      return false;
+    }
+  }
+
+  Future<void> _onSubmit() async {
     if (_selectedBlockId == null || _selectedTopicId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -64,19 +162,25 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
     }
 
     final int n = _numQuestions.toInt();
+    final canStart = await _canStartFreeTest(n);
+    if (!canStart) return;
 
     final config = TopicTestConfig(
-      topicId: topic.id,      // 👈 G1 (coincide con topic_id en JSON/BBDD)
-      topicName: topic.label, // 👈 "G1 - Constitución" (texto visible)
+      blockId: topic.blockId,
+      topicCode: topic.topicCode,
+      topicId: topic.topicId,
+      topicName: topic.topicName,
+      entityId: topic.entityId,
+      syllabusId: topic.syllabusId,
       numQuestions: n,
       withTimer: _withTimer,
     );
 
     Navigator.of(context).push(
-  MaterialPageRoute(
-    builder: (_) => TestRunnerScreen.forTopic(config: config),
-  ),
-);
+      MaterialPageRoute(
+        builder: (_) => TestRunnerScreen.forTopic(config: config),
+      ),
+    );
 
   }
 
@@ -296,7 +400,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
               items: _topicsForSelectedBlock
                   .map(
                     (topic) => DropdownMenuItem<String>(
-                      value: topic.id,
+                      value: topic.topicId,
                       child: Text(topic.label),
                     ),
                   )
@@ -314,23 +418,23 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
           // Número de preguntas
           _buildField(
             label: 'Número de preguntas',
-            hint: 'De 20 a 100, en pasos de 10.',
+            hint: 'De 5 a 50, en pasos de 5.',
             child: Row(
               children: [
-                Expanded(
-                  child: Slider(
-                    value: _numQuestions,
-                    min: 20,
-                    max: 100,
-                    divisions: 8,
-                    label: _numQuestions.toInt().toString(),
-                    onChanged: (value) {
-                      setState(() {
-                        _numQuestions = value;
-                      });
-                    },
+                  Expanded(
+                    child: Slider(
+                      value: _numQuestions,
+                      min: 5,
+                      max: 50,
+                      divisions: 9,
+                      label: _numQuestions.toInt().toString(),
+                      onChanged: (value) {
+                        setState(() {
+                          _numQuestions = value;
+                        });
+                      },
+                    ),
                   ),
-                ),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -355,7 +459,7 @@ class _TopicTestConfigScreenState extends State<TopicTestConfigScreen> {
           // Cronómetro
           _buildField(
             label: 'Cronómetro',
-            hint: '72s por pregunta (1,2 min). Ejemplos: 20→24 min, 100→120 min.',
+            hint: '72s por pregunta (1,2 min). Ejemplos: 5→6 min, 50→60 min.',
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

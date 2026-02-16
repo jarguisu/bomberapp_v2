@@ -12,14 +12,63 @@ dependencies:
   google_fonts: ^6.3.3
   sqflite: ^2.3.3+1
   path: ^1.9.0
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  google_sign_in: ^6.2.1
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/data/questions_g1.json
     - assets/data/questions_g2.json
+    - assets/data/questions_g3.json
+    - assets/data/questions_g4.json
+    - assets/data/questions_g5.json
+    - assets/data/questions_g6.json
+    - assets/data/questions_g7.json
+    - assets/data/questions_g8.json
+    - assets/data/questions_g9.json
+    - assets/data/questions_g10.json
+    - assets/data/questions_g11.json
+    - assets/data/questions_e3.json
+    - assets/data/questions_e4.json
+    - assets/data/questions_e5.json
+    - assets/data/questions_e6.json
+    - assets/data/questions_e7.json
+    - assets/data/questions_e8.json
+    - assets/data/questions_e9.json
+    - assets/data/questions_e10.json
+    - assets/data/questions_e11.json
+    - assets/data/questions_e12.json
+    - assets/data/questions_e13.json
+    - assets/data/questions_e14.json
+    - assets/data/questions_e15.json
+    - assets/data/questions_e16.json
+    - assets/data/questions_e17.json
+    - assets/data/questions_e18.json
+    - assets/data/questions_e19.json
+    - assets/data/questions_e20.json
+    - assets/data/questions_e21.json
+    - assets/data/questions_e22.json
+    - assets/data/questions_e23.json
+    - assets/data/questions_e24.json
+    - assets/data/questions_s1.json
+    - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/favicon.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/images/favicon.png"
+  adaptive_icon_foreground_inset: 22
