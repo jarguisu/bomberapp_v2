@@ -1,0 +1,16 @@
+[
+  {
+    "id": "E5_UDM_Q_0001",
+    "topic_id": "E5",
+    "text": "Qué aparato de medida se utiliza para medir las presiones inferiores a la atmosférica?",
+    "correct": "Vacuómetro",
+    "wrong1": "Manómetro",
+    "wrong2": "Dinamómetro ",
+    "wrong3": "Galvanómetro",
+    "explanation": "El vacuómetro se utiliza para medir presiones por debajo de la presión atmosférica (vacío relativo).",
+    "reference": "Instrumentación: vacuómetro y manómetro",
+    "difficulty": 1,
+    "source": "Elaboración propia",
+    "year": null
+  }
+]

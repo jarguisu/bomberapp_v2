@@ -63,7 +63,7 @@ class StatsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Últimos 7 días', style: theme.textTheme.titleMedium),
+          Text('Historico de tests', style: theme.textTheme.titleMedium),
           const SizedBox(height: 10),
           Column(
             children: [

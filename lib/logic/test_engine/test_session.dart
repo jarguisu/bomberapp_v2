@@ -1,65 +1,59 @@
 import 'dart:math';
+
 import '../../data/questions/question_model.dart';
 
-/// Representa una opción de respuesta (correcta o incorrecta)
 class AnswerOption {
   final String text;
   final bool isCorrect;
 
-  const AnswerOption({
-    required this.text,
-    required this.isCorrect,
-  });
+  const AnswerOption({required this.text, required this.isCorrect});
 }
 
-/// Representa una sesión de test en curso
 class TestSession {
   final List<Question> questions;
+  final Map<String, bool> _answersByQuestionId;
+  final Set<String> failedQuestionIds;
 
-  /// Índice de la pregunta actual dentro de [questions]
   int currentIndex;
-
-  /// Registro de respuestas del usuario:
-  /// key = id de la pregunta, value = true (acertada), false (fallada)
-  final Map<int, bool> _answersByQuestionId;
 
   TestSession({
     required this.questions,
+    this.failedQuestionIds = const {},
+    Map<String, bool>? answersByQuestionId,
     this.currentIndex = 0,
-    Map<int, bool>? answersByQuestionId,
   }) : _answersByQuestionId = answersByQuestionId ?? {};
 
-  /// Pregunta actual
   Question get currentQuestion => questions[currentIndex];
 
-  /// ¿Ya se ha respondido esta pregunta?
   bool get isCurrentAnswered =>
       _answersByQuestionId.containsKey(currentQuestion.id);
 
-  /// Devuelve true si la sesión ha llegado a la última pregunta y ya está contestada.
-  bool get isFinished =>
-      currentIndex == questions.length - 1 && isCurrentAnswered;
-
-  /// Número de aciertos
+  /// Numero de aciertos
   int get correctCount =>
       _answersByQuestionId.values.where((v) => v == true).length;
 
-  /// Número de fallos
+  /// Numero de fallos
   int get wrongCount =>
       _answersByQuestionId.values.where((v) => v == false).length;
 
-  /// Puntuación con penalización −0,33 por fallo
-  double get scoreWithPenalty =>
-      correctCount - wrongCount * 0.33;
+  double get _pointsPerQuestion =>
+      questions.isEmpty ? 0 : 10 / questions.length;
+
+  /// Puntuacion sobre 10 con penalizacion -0,33 por fallo.
+  /// Acierto = + (10 / nPreguntas). Blanco = 0. Fallo = -0,33.
+  double get scoreWithPenalty {
+    final raw = correctCount * _pointsPerQuestion - wrongCount * 0.33;
+    return raw.clamp(0, 10).toDouble();
+  }
 
   /// Devuelve las 4 opciones de respuesta de una pregunta, ya mezcladas.
-  /// Si quieres usarlo para otra pregunta, pásala como parámetro;
+  /// Si quieres usarlo para otra pregunta, pasala como parametro;
   /// si no, usa la [currentQuestion].
   List<AnswerOption> getShuffledOptions({Question? question}) {
     final q = question ?? currentQuestion;
 
     final options = <AnswerOption>[
-      AnswerOption(text: q.correctAnswer, isCorrect: true),
+      AnswerOption(text: q.correct, isCorrect: true),
       AnswerOption(text: q.wrong1, isCorrect: false),
       AnswerOption(text: q.wrong2, isCorrect: false),
       AnswerOption(text: q.wrong3, isCorrect: false),
@@ -90,11 +84,11 @@ class TestSession {
     }
   }
 
-  /// Devuelve true si esa pregunta se respondió correctamente
-  bool? wasQuestionCorrect(int questionId) {
+  /// Devuelve true si esa pregunta se respondio correctamente
+  bool? wasQuestionCorrect(String questionId) {
     return _answersByQuestionId[questionId];
   }
 
-  /// Devuelve el mapa interno de respuestas (útil para estadísticas, guardar progreso, etc.)
-  Map<int, bool> get answers => Map.unmodifiable(_answersByQuestionId);
+  /// Devuelve el mapa interno de respuestas (util para estadisticas, guardar progreso, etc.)
+  Map<String, bool> get answers => Map.unmodifiable(_answersByQuestionId);
 }

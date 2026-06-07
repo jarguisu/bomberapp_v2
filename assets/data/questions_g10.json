@@ -1,0 +1,44 @@
+[
+  {
+    "id": "G10_HAC_Q_0001",
+    "topic_id": "G10",
+    "text": "En el sistema tributario español, ¿quién puede establecer y exigir tributos?",
+    "correct": "Todas son correctas",
+    "wrong1": "El Estado",
+    "wrong2": "Las comunidades autónomas",
+    "wrong3": "Las entidades locales",
+    "explanation": "En el sistema tributario español, el Estado, las Comunidades Autónomas y las Entidades Locales tienen potestad tributaria en los términos establecidos por la Constitución y las leyes.",
+    "reference": "Constitución Española, art. 133",
+    "difficulty": 1,
+    "source": "Elaboración propia",
+    "year": null
+  },
+  {
+    "id": "G10_HAC_Q_0002",
+    "topic_id": "G10",
+    "text": "El IRPF:",
+    "correct": "Gravan a la renta",
+    "wrong1": "Es de imposición indirecta",
+    "wrong2": "Sus siglas son (Impuesto Real sobre las personas Físicas)",
+    "wrong3": "Es un impuesto cedido a las comunidades autónomas.",
+    "explanation": "El IRPF es un impuesto directo y personal que grava la renta de las personas físicas.",
+    "reference": "Ley 35/2006, del IRPF",
+    "difficulty": 1,
+    "source": "Elaboración propia",
+    "year": null
+  },
+  {
+    "id": "G10_HAC_Q_0003",
+    "topic_id": "G10",
+    "text": "La Ley 58/2003, de 17 de diciembre hace referencia a:",
+    "correct": "Ley general tributaria y normas de desarrollo",
+    "wrong1": "Ley de Haciendas Locales",
+    "wrong2": "Ley de la hacienda pública estatal",
+    "wrong3": "Ley de la hacienda pública Autonómica",
+    "explanation": "La Ley 58/2003 es la Ley General Tributaria, que regula el sistema tributario español y sus principios básicos.",
+    "reference": "Ley 58/2003, de 17 de diciembre, General Tributaria",
+    "difficulty": 1,
+    "source": "Elaboración propia",
+    "year": null
+  }
+]

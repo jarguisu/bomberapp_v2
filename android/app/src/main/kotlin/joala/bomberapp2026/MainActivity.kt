@@ -1,4 +1,4 @@
-package com.example.bomber_app2
+package joala.bomberapp2026
 
 import io.flutter.embedding.android.FlutterActivity
 
