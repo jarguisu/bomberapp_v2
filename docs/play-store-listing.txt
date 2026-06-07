@@ -1,0 +1,65 @@
+========================================
+LISTING GOOGLE PLAY STORE — BomberCV
+========================================
+
+TÍTULO (máx. 30 caracteres):
+BomberCV - Oposición Bombero
+
+DESCRIPCIÓN CORTA (máx. 80 caracteres):
+Prepara tu oposición de Bombero con tests, simulacros y estadísticas.
+
+DESCRIPCIÓN LARGA (máx. 4000 caracteres):
+¿Preparando las oposiciones de Bombero/a? BomberCV es tu compañero de estudio definitivo.
+
+Repasa todos los bloques del temario oficial con tests interactivos, simulacros cronometrados y un seguimiento completo de tu progreso.
+
+📚 CONTENIDO COMPLETO
+• Bloque General: 11 temas (G1–G11)
+• Bloque Específico: 22 temas (E3–E24)
+• Bloque Especial: tema S1
+• Cientos de preguntas tipo test con 4 opciones
+
+🎯 MODOS DE ESTUDIO
+• Test por tema: practica un tema concreto cuantas veces quieras
+• Test personalizado: combina los temas que más necesitas repasar
+• Simulacro oficial: reproduce las condiciones reales del examen con cronómetro
+
+📊 ESTADÍSTICAS Y SEGUIMIENTO
+• Consulta tu porcentaje de aciertos por tema y en global
+• Revisa y repite las preguntas que has fallado
+• Sigue tu racha de días de estudio y tu mejor puntuación
+
+☁️ SINCRONIZACIÓN EN LA NUBE
+• Tus estadísticas y preguntas falladas se guardan en la nube
+• Accede desde cualquier dispositivo con tu cuenta
+
+🔐 ACCESO SENCILLO
+• Regístrate con email/contraseña o con Google
+• Sin anuncios intrusivos
+
+Descarga BomberCV y empieza a preparar tu oposición hoy mismo.
+
+CATEGORÍA: Educación
+
+ETIQUETAS / PALABRAS CLAVE:
+bombero, oposicion bombero, test bombero, preparar oposicion, temario bombero, simulacro bombero, estudio oposicion, oposiciones
+
+========================================
+ICONO PARA PLAY STORE:
+Archivo: assets/icon/app_icon.png (1024×1024 px)
+Play Store requiere: 512×512 px mínimo — exportar a 512×512 antes de subir
+========================================
+
+SCREENSHOTS NECESARIOS (mínimo 2, recomendado 4-8):
+Resoluciones aceptadas: 16:9 o 9:16, mínimo 320px en el lado corto
+Pantallas recomendadas para capturar:
+  1. Pantalla de inicio / Home (dashboard con los modos de test)
+  2. Test en curso (pregunta con opciones)
+  3. Resultados del test (puntuación final)
+  4. Pantalla de estadísticas
+  5. Selección de tema (lista de temas)
+  6. Pantalla de simulacro
+
+URL POLÍTICA DE PRIVACIDAD:
+https://jarguisu.github.io/bomberapp_v2/privacy-policy.html
+(Activar GitHub Pages en Settings > Pages > Branch: main, Folder: /docs)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import 'theme/app_theme.dart';
 import 'data/seed/question_seed_loader.dart';
@@ -12,6 +13,9 @@ Future<void> main() async {
 
   // Inicializar Firebase
   await Firebase.initializeApp();
+
+  // Enviar errores de Flutter no capturados a Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
   // Cargar preguntas de temas desde JSON a SQLite (solo si no existen)
   await QuestionSeedLoader.seedFromJsonAsset('assets/data/questions_g1.json');
